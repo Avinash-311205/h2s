@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+.ruff_cache/
+.mypy_cache/
+.hypothesis/
+.venv/
+venv/
+
+# Local development databases and logs
+*.db
+*.sqlite3
+*.log
+
+# Never commit real secrets - use .env.example as the template
+.env

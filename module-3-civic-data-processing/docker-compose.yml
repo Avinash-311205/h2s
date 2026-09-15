@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: civic_processing
+      POSTGRES_USER: civic
+      POSTGRES_PASSWORD: civic123
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U civic -d civic_processing"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      ENVIRONMENT: docker
+      DATABASE_URL: postgresql://civic:civic123@postgres:5432/civic_processing
+      POSTGIS_ENABLED: "true"
+      AUTO_CREATE_SCHEMA: "true"
+      REDIS_URL: redis://redis:6379/0
+      EVENT_PUBLISHER: redis
+      EVENT_CHANNEL: civic.records.processed
+      GEOCODING_PROVIDER: mock
+      LOG_JSON: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8001:8000"
+
+volumes:
+  pgdata:

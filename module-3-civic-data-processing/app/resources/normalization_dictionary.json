@@ -1,0 +1,569 @@
+{
+  "version": "1.0.0",
+  "description": "Canonical category/sub-category vocabulary for Niti-Setu civic records. Add new languages or BRICS languages by extending the per-language keyword lists; no code changes required.",
+  "languages": ["en", "ta", "hi", "te", "bn", "kn", "ml"],
+  "categories": {
+    "ROAD": {
+      "aliases": {
+        "en": ["road", "roads", "street", "highway", "roadway", "pothole", "road condition"],
+        "ta": ["சாலை", "சாலைகள்", "சாலை பிரச்சனை"],
+        "hi": ["सड़क", "सड़कें", "मार्ग", "सड़क मार्ग"],
+        "te": ["రోడ్డు", "రహదారి", "రోడ్లు"],
+        "bn": ["রাস্তা", "সড়ক", "পথ"],
+        "kn": ["ರಸ್ತೆ", "ಮಾರ್ಗ", "ರಸ್ತೆಗಳು"],
+        "ml": ["റോഡ്", "റോഡുകൾ", "വഴി"]
+      },
+      "sub_categories": {
+        "DAMAGED_ROAD": {
+          "aliases": ["pothole", "potholes", "damaged road", "broken road", "bad road", "road damage", "road repair", "damaged_road", "road_repair"],
+          "keywords": {
+            "en": ["road is broken", "road is damaged", "road needs repair", "road full of potholes", "full of potholes", "potholes everywhere", "damaged road", "broken road", "bad road", "road damage", "road repair", "pothole", "potholes", "unpaved road", "mud road"],
+            "ta": ["சேதமடைந்த சாலை", "சாலை சேதம்", "சாலை பழுது", "சாலையில் பள்ளங்கள்", "பள்ளங்கள்", "பள்ளம்"],
+            "hi": ["टूटी सड़क", "सड़क टूटी", "सड़क की मरम्मत", "सड़क में गड्ढे", "गड्ढे", "गड्ढा"],
+            "te": ["పాడైన రోడ్డు", "రోడ్డు మరమ్మత్తు", "రోడ్డు గుంతలు", "గుంతలు", "గుంత"],
+            "bn": ["ভাঙা রাস্তা", "রাস্তা মেরামত", "রাস্তায় গর্ত", "গর্ত"],
+            "kn": ["ಹಾಳಾದ ರಸ್ತೆ", "ರಸ್ತೆ ದುರಸ್ತಿ", "ರಸ್ತೆಯಲ್ಲಿ ಗುಂಡಿ", "ಗುಂಡಿಗಳು", "ಗುಂಡಿ"],
+            "ml": ["കേടായ റോഡ്", "റോഡ് അറ്റകുറ്റപ്പണി", "റോഡിൽ കുഴി", "കുഴികൾ", "കുഴി"]
+          }
+        },
+        "ROAD_SAFETY": {
+          "aliases": ["road safety", "road_safety", "accident", "accidents", "speed breaker", "dangerous road", "unsafe road"],
+          "keywords": {
+            "en": ["road safety", "road accident", "accidents", "accident", "speed breaker", "no speed breaker", "dangerous road", "unsafe road", "sharp curve"],
+            "ta": ["சாலை பாதுகாப்பு", "விபத்து", "விபத்துகள்", "வேகத்தடை"],
+            "hi": ["सड़क सुरक्षा", "दुर्घटना", "दुर्घटनाएं", "गति अवरोधक"],
+            "te": ["రోడ్డు భద్రత", "ప్రమాదం", "ప్రమాదాలు", "స్పీడ్ బ్రేకర్"],
+            "bn": ["সড়ক নিরাপত্তা", "দুর্ঘটনা", "গতি প্রতিবন্ধক"],
+            "kn": ["ರಸ್ತೆ ಸುರಕ್ಷತೆ", "ಅಪಘಾತ", "ವೇಗ ತಡೆ"],
+            "ml": ["റോഡ് സുരക്ഷ", "അപകടം", "സ്പീഡ് ബ്രേക്കർ"]
+          }
+        },
+        "TRAFFIC_MANAGEMENT": {
+          "aliases": ["traffic", "traffic jam", "traffic_jam", "traffic signal", "traffic light", "congestion", "traffic_management"],
+          "keywords": {
+            "en": ["traffic jam", "traffic congestion", "traffic signal", "traffic light", "signal not working", "traffic problem"],
+            "ta": ["போக்குவரத்து நெரிசல்", "வாகன நெரிசல்", "போக்குவரத்து சிக்னல்", "சிக்னல்"],
+            "hi": ["ट्रैफिक जाम", "यातायात", "ट्रैफिक सिग्नल", "जाम"],
+            "te": ["ట్రాఫిక్ జామ్", "ట్రాఫిక్ సిగ్నల్", "ట్రాఫిక్"],
+            "bn": ["যানজট", "ট্র্যাফিক সিগন্যাল", "জ্যাম"],
+            "kn": ["ಸಂಚಾರ ದಟ್ಟಣೆ", "ಟ್ರಾಫಿಕ್ ಸಿಗ್ನಲ್", "ಜಾಮ್"],
+            "ml": ["ഗതാഗത കുരുക്ക്", "ട്രാഫിക് സിഗ്നൽ", "ജാം"]
+          }
+        }
+      }
+    },
+    "WATER": {
+      "aliases": {
+        "en": ["water", "water supply", "drinking water", "tap water", "jal"],
+        "ta": ["தண்ணீர்", "நீர்", "குடிநீர்"],
+        "hi": ["पानी", "जल", "पेयजल"],
+        "te": ["నీరు", "నీళ్లు", "తాగునీరు"],
+        "bn": ["পানি", "জল", "পানীয় জল"],
+        "kn": ["ನೀರು", "ಜಲ", "ಕುಡಿಯುವ ನೀರು"],
+        "ml": ["വെള്ളം", "ജലം", "കുടിവെള്ളം"]
+      },
+      "sub_categories": {
+        "DRINKING_WATER": {
+          "aliases": ["drinking water", "drinking_water", "no drinking water", "water supply", "water_supply", "water supply problem", "no water supply", "water supply problem", "tap water", "tap_water", "tap water unavailable", "no water", "water problem", "water shortage", "water_problem"],
+          "keywords": {
+            "en": ["no drinking water", "drinking water problem", "drinking water", "no water supply", "water supply problem", "water supply", "tap water unavailable", "tap water", "water shortage", "no water", "water is not coming", "water problem"],
+            "ta": ["குடிநீர் இல்லை", "குடிநீர் பிரச்சனை", "குடிநீர்", "தண்ணீர் இல்லை", "தண்ணீர் பிரச்சனை", "தண்ணீர் வரவில்லை"],
+            "hi": ["पीने का पानी", "पानी नहीं", "पानी की समस्या", "पानी की किल्लत", "नल का पानी", "पानी नहीं आ रहा"],
+            "te": ["తాగునీరు లేదు", "తాగునీరు", "నీటి సమస్య", "నీళ్లు రావడం లేదు"],
+            "bn": ["খাবার পানি", "পানি নেই", "পানির সমস্যা", "কলের পানি"],
+            "kn": ["ಕುಡಿಯುವ ನೀರು", "ನೀರು ಇಲ್ಲ", "ನೀರಿನ ಸಮಸ್ಯೆ", "ನೀರು ಬರುತ್ತಿಲ್ಲ"],
+            "ml": ["കുടിവെള്ളം", "കുടിവെള്ളം ഇല്ല", "വെള്ളത്തിന്റെ പ്രശ്നം", "വെള്ളം വരുന്നില്ല"]
+          }
+        },
+        "WATER_SUPPLY_DISRUPTION": {
+          "aliases": ["water pipe", "pipeline burst", "water leakage", "water leak", "water tanker", "water connection", "new water connection", "borewell", "bore well"],
+          "keywords": {
+            "en": ["pipe burst", "pipeline burst", "water pipe", "water leakage", "water leak", "water tanker", "irregular water supply", "new water connection", "water connection", "borewell", "bore well"],
+            "ta": ["குழாய் உடைந்தது", "குழாய் கசிவு", "குழாய்", "நீர் இணைப்பு", "போர்வெல்"],
+            "hi": ["पाइप फूटा", "पाइप", "पानी का रिसाव", "नया पानी कनेक्शन", "नल कनेक्शन", "बोरवेल"],
+            "te": ["పైపు పగిలింది", "పైపు", "నీటి లీకేజీ", "నీటి కనెక్షన్", "బోరువెల్"],
+            "bn": ["পাইপ ফেটে গেছে", "পাইপ", "জল লিক", "জলের সংযোগ", "নলকূপ"],
+            "kn": ["ಪೈಪ್ ಒಡೆದಿದೆ", "ಪೈಪ್", "ನೀರಿನ ಸೋರಿಕೆ", "ನೀರಿನ ಸಂಪರ್ಕ", "ಬೋರ್‌ವೆಲ್"],
+            "ml": ["പൈപ്പ് പൊട്ടി", "പൈപ്പ്", "വെള്ളം ചോരുന്നു", "വാട്ടർ കണക്ഷൻ", "കിണർ"]
+          }
+        },
+        "WATER_QUALITY": {
+          "aliases": ["water quality", "dirty water", "contaminated water", "water_quality"],
+          "keywords": {
+            "en": ["water is dirty", "contaminated water", "dirty water", "water quality", "muddy water", "smelly water", "unsafe water", "salty water"],
+            "ta": ["அழுக்கு தண்ணீர்", "மாசுபட்ட தண்ணீர்", "தண்ணீர் அழுக்கு"],
+            "hi": ["गंदा पानी", "दूषित पानी", "पानी गंदा है"],
+            "te": ["కలుషిత నీరు", "మురికి నీరు", "నీరు కలుషితం"],
+            "bn": ["নোংরা পানি", "দূষিত পানি", "পানি নোংরা"],
+            "kn": ["ಕಲುಷಿತ ನೀರು", "ಕೊಳಕು ನೀರು", "ನೀರು ಕೊಳಕು"],
+            "ml": ["മലിനമായ വെള്ളം", "വൃത്തികെട്ട വെള്ളം", "വെള്ളം മലിനം"]
+          }
+        },
+        "IRRIGATION": {
+          "aliases": ["irrigation", "canal", "farm water", "agriculture water", "dam water"],
+          "keywords": {
+            "en": ["irrigation", "canal water", "canal", "farm water", "agriculture water", "dam water"],
+            "ta": ["நீர்ப்பாசனம்", "கால்வாய்", "விவசாய தண்ணீர்"],
+            "hi": ["सिंचाई", "नहर", "खेत का पानी"],
+            "te": ["నీటిపారుదల", "కాలువ", "వ్యవసాయ నీరు"],
+            "bn": ["সেচ", "খাল", "কৃষি জল"],
+            "kn": ["ನೀರಾವರಿ", "ಕಾಲುವೆ", "ಕೃಷಿ ನೀರು"],
+            "ml": ["ജലസേചനം", "തോട്", "കൃഷി വെള്ളം"]
+          }
+        }
+      }
+    },
+    "ELECTRICITY": {
+      "aliases": {
+        "en": ["electricity", "power", "electric", "power supply", "current"],
+        "ta": ["மின்சாரம்", "மின்", "மின்சார விநியோகம்"],
+        "hi": ["बिजली", "विद्युत"],
+        "te": ["విద్యుత్", "కరెంట్"],
+        "bn": ["বিদ্যুৎ", "কারেন্ট"],
+        "kn": ["ವಿದ್ಯುತ್", "ಕರೆಂಟ್"],
+        "ml": ["വൈദ്യുതി", "കറന്റ്"]
+      },
+      "sub_categories": {
+        "POWER_OUTAGE": {
+          "aliases": ["power cut", "power_cut", "power outage", "no electricity", "electricity problem", "power failure", "current problem"],
+          "keywords": {
+            "en": ["frequent power cut", "power outage", "power failure", "power cut", "no electricity", "electricity problem", "no power", "electricity is not coming", "current problem"],
+            "ta": ["மின் தடை", "மின்சாரம் இல்லை", "மின்வெட்டு", "மின்சார பிரச்சனை"],
+            "hi": ["बिजली गुल", "बिजली नहीं", "बिजली कटौती", "बिजली की समस्या"],
+            "te": ["విద్యుత్ కోత", "కరెంట్ లేదు", "విద్యుత్ సమస్య"],
+            "bn": ["বিদ্যুৎ বিভ্রাট", "বিদ্যুৎ নেই", "লোড শেডিং"],
+            "kn": ["ವಿದ್ಯುತ್ ಕಡಿತ", "ಕರೆಂಟ್ ಇಲ್ಲ", "ವಿದ್ಯುತ್ ಸಮಸ್ಯೆ"],
+            "ml": ["വൈദ്യുതി മുടക്കം", "വൈദ്യുതി ഇല്ല", "പവർ കട്ട്"]
+          }
+        },
+        "STREET_LIGHTING": {
+          "aliases": ["street light", "street_light", "street lights", "streetlight", "street lighting", "no street light", "street lamp"],
+          "keywords": {
+            "en": ["no street light", "street light not working", "street lights", "street light", "streetlight", "light not working", "broken street light", "street lamp"],
+            "ta": ["தெரு விளக்குகள்", "தெரு விளக்கு", "விளக்கு எரியவில்லை"],
+            "hi": ["स्ट्रीट लाइट", "सड़क की लाइट", "लाइट खराब", "बत्ती नहीं जल रही"],
+            "te": ["వీధి దీపాలు", "వీధి దీపం", "దీపం పనిచేయడం లేదు"],
+            "bn": ["রাস্তার আলো", "স্ট্রিট লাইট", "আলো জ্বলছে না"],
+            "kn": ["ಬೀದಿ ದೀಪಗಳು", "ಬೀದಿ ದೀಪ", "ದೀಪ ಉರಿಯುತ್ತಿಲ್ಲ"],
+            "ml": ["തെരുവ് വിളക്ക്", "സ്ട്രീറ്റ് ലൈറ്റ്", "വിളക്ക് കത്തുന്നില്ല"]
+          }
+        },
+        "TRANSFORMER_ISSUE": {
+          "aliases": ["transformer", "transformer burnt", "transformer failure", "voltage problem", "low voltage"],
+          "keywords": {
+            "en": ["transformer burnt", "transformer failure", "transformer damaged", "transformer repair", "transformer", "voltage problem", "low voltage"],
+            "ta": ["மின்மாற்றி", "டிரான்ஸ்பார்மர்", "குறைந்த மின்னழுத்தம்"],
+            "hi": ["ट्रांसफार्मर खराब", "ट्रांसफार्मर", "वोल्टेज की समस्या", "लो वोल्टेज"],
+            "te": ["ట్రాన్స్ఫార్మర్ పాడైంది", "ట్రాన్స్ఫార్మర్", "వోల్టేజ్ సమస్య"],
+            "bn": ["ট্রান্সফরমার খারাপ", "ট্রান্সফরমার", "ভোল্টেজ সমস্যা"],
+            "kn": ["ಟ್ರಾನ್ಸ್‌ಫಾರ್ಮರ್ ಸುಟ್ಟುಹೋಗಿದೆ", "ಟ್ರಾನ್ಸ್‌ಫಾರ್ಮರ್", "ವೋಲ್ಟೇಜ್ ಸಮಸ್ಯೆ"],
+            "ml": ["ട്രാൻസ്ഫോർമർ കത്തി", "ട്രാൻസ്ഫോർമർ", "വോൾട്ടേജ് പ്രശ്നം"]
+          }
+        },
+        "ELECTRICITY_BILLING": {
+          "aliases": ["electricity bill", "bill problem", "wrong bill", "meter reading", "electricity meter", "billing issue"],
+          "keywords": {
+            "en": ["electricity bill", "bill problem", "wrong bill", "meter reading", "meter problem", "electricity meter", "billing issue"],
+            "ta": ["மின் கட்டணம்", "மின்சார கட்டணம்", "மீட்டர் பிரச்சனை"],
+            "hi": ["बिजली बिल", "बिल की समस्या", "मीटर की समस्या"],
+            "te": ["విద్యుత్ బిల్లు", "బిల్లు సమస్య", "మీటర్ సమస్య"],
+            "bn": ["বিদ্যুৎ বিল", "বিল সমস্যা", "মিটার সমস্যা"],
+            "kn": ["ವಿದ್ಯುತ್ ಬಿಲ್", "ಬಿಲ್ ಸಮಸ್ಯೆ", "ಮೀಟರ್ ಸಮಸ್ಯೆ"],
+            "ml": ["വൈദ്യുതി ബിൽ", "ബിൽ പ്രശ്നം", "മീറ്റർ പ്രശ്നം"]
+          }
+        }
+      }
+    },
+    "HEALTHCARE": {
+      "aliases": {
+        "en": ["health", "healthcare", "health care", "medical", "hospital", "clinic", "medicine"],
+        "ta": ["சுகாதாரம்", "மருத்துவம்", "மருத்துவமனை"],
+        "hi": ["स्वास्थ्य", "चिकित्सा", "इलाज", "अस्पताल"],
+        "te": ["ఆరోగ్యం", "వైద్యం", "ఆసుపత్రి"],
+        "bn": ["স্বাস্থ্য", "চিকিৎসা", "হাসপাতাল"],
+        "kn": ["ಆರೋಗ್ಯ", "ವೈದ್ಯಕೀಯ", "ಆಸ್ಪತ್ರೆ"],
+        "ml": ["ആരോഗ്യം", "ചികിത്സ", "ആശുപത്രി"]
+      },
+      "sub_categories": {
+        "PRIMARY_HEALTHCARE": {
+          "aliases": ["phc", "primary health centre", "primary health center", "health centre", "health center", "clinic", "no doctor"],
+          "keywords": {
+            "en": ["primary health centre", "primary health center", "health centre", "health center", "no doctor", "doctor not available", "no health worker", "clinic"],
+            "ta": ["ஆரம்ப சுகாதார நிலையம்", "சுகாதார நிலையம்", "மருத்துவர் இல்லை"],
+            "hi": ["प्राथमिक स्वास्थ्य केंद्र", "स्वास्थ्य केंद्र", "डॉक्टर नहीं", "डॉक्टर उपलब्ध नहीं"],
+            "te": ["ఆరోగ్య కేంద్రం", "ప్రాథమిక ఆరోగ్య కేంద్రం", "వైద్యుడు లేడు"],
+            "bn": ["স্বাস্থ্য কেন্দ্র", "প্রাথমিক স্বাস্থ্য কেন্দ্র", "ডাক্তার নেই"],
+            "kn": ["ಆರೋಗ್ಯ ಕೇಂದ್ರ", "ಪ್ರಾಥಮಿಕ ಆರೋಗ್ಯ ಕೇಂದ್ರ", "ವೈದ್ಯರು ಇಲ್ಲ"],
+            "ml": ["ആരോഗ്യ കേന്ദ്രം", "പ്രാഥമിക ആരോഗ്യ കേന്ദ്രം", "ഡോക്ടർ ഇല്ല"]
+          }
+        },
+        "HOSPITAL_ACCESS": {
+          "aliases": ["hospital access", "nearest hospital", "no hospital", "hospital is far", "hospital facility"],
+          "keywords": {
+            "en": ["nearest hospital", "no hospital", "hospital is far", "hospital access", "hospital facility", "far hospital"],
+            "ta": ["மருத்துவமனை இல்லை", "அருகில் மருத்துவமனை இல்லை", "மருத்துவமனை தூரம்"],
+            "hi": ["अस्पताल नहीं", "नजदीकी अस्पताल", "अस्पताल दूर है"],
+            "te": ["ఆసుపత్రి లేదు", "దగ్గర్లో ఆసుపత్రి లేదు"],
+            "bn": ["হাসপাতাল নেই", "কাছাকাছি হাসপাতাল নেই"],
+            "kn": ["ಆಸ್ಪತ್ರೆ ಇಲ್ಲ", "ಹತ್ತಿರದ ಆಸ್ಪತ್ರೆ ಇಲ್ಲ"],
+            "ml": ["ആശുപത്രി ഇല്ല", "അടുത്ത് ആശുപത്രി ഇല്ല"]
+          }
+        },
+        "MEDICINE_SHORTAGE": {
+          "aliases": ["medicine shortage", "no medicines", "medicines not available", "free medicine", "no medicine"],
+          "keywords": {
+            "en": ["no medicines", "medicine shortage", "medicines not available", "free medicine", "no medicine", "medicine problem"],
+            "ta": ["மருந்து இல்லை", "மருந்துகள் இல்லை"],
+            "hi": ["दवा नहीं", "दवाइयां नहीं", "दवा की कमी"],
+            "te": ["మందులు లేవు", "మందుల కొరత"],
+            "bn": ["ওষুধ নেই", "ওষুধের অভাব"],
+            "kn": ["ಔಷಧಿ ಇಲ್ಲ", "ಔಷಧಿ ಕೊರತೆ"],
+            "ml": ["മരുന്ന് ഇല്ല", "മരുന്ന് ക്ഷാമം"]
+          }
+        },
+        "AMBULANCE_SERVICE": {
+          "aliases": ["ambulance", "108 ambulance", "no ambulance", "ambulance not available", "ambulance delay"],
+          "keywords": {
+            "en": ["ambulance not available", "no ambulance", "ambulance delay", "108 ambulance", "ambulance", "108"],
+            "ta": ["ஆம்புலன்ஸ் இல்லை", "ஆம்புலன்ஸ்", "108"],
+            "hi": ["एम्बुलेंस नहीं", "एम्बुलेंस", "108"],
+            "te": ["అంబులెన్స్ లేదు", "అంబులెన్స్", "108"],
+            "bn": ["অ্যাম্বুলেন্স নেই", "অ্যাম্বুলেন্স", "108"],
+            "kn": ["ಆಂಬ್ಯುಲೆನ್ಸ್ ಇಲ್ಲ", "ಆಂಬ್ಯುಲೆನ್ಸ್", "108"],
+            "ml": ["ആംബുലൻസ് ഇല്ല", "ആംബുലൻസ്", "108"]
+          }
+        }
+      }
+    },
+    "EDUCATION": {
+      "aliases": {
+        "en": ["education", "school", "college", "students", "teaching"],
+        "ta": ["கல்வி", "பள்ளி"],
+        "hi": ["शिक्षा", "स्कूल", "विद्यालय"],
+        "te": ["విద్య", "పాఠశాల"],
+        "bn": ["শিক্ষা", "স্কুল", "বিদ্যালয়"],
+        "kn": ["ಶಿಕ್ಷಣ", "ಶಾಲೆ"],
+        "ml": ["വിദ്യാഭ്യാസം", "സ്കൂൾ"]
+      },
+      "sub_categories": {
+        "SCHOOL_INFRASTRUCTURE": {
+          "aliases": ["school building", "school roof", "school wall", "classroom", "school toilet", "school repair", "damaged school"],
+          "keywords": {
+            "en": ["school building", "school roof", "school wall", "no classroom", "classroom", "school toilet", "school furniture", "school repair", "damaged school"],
+            "ta": ["பள்ளி கட்டிடம்", "பள்ளி கூரை", "வகுப்பறை", "பள்ளி சேதம்"],
+            "hi": ["स्कूल की इमारत", "स्कूल की छत", "कक्षा", "स्कूल मरम्मत"],
+            "te": ["పాఠశాల భవనం", "తరగతి గది", "పాఠశాల మరమ్మత్తు"],
+            "bn": ["স্কুল ভবন", "শ্রেণিকক্ষ", "স্কুল মেরামত"],
+            "kn": ["ಶಾಲಾ ಕಟ್ಟಡ", "ತರಗತಿ ಕೊಠಡಿ", "ಶಾಲೆ ದುರಸ್ತಿ"],
+            "ml": ["സ്കൂൾ കെട്ടിടം", "ക്ലാസ് മുറി", "സ്കൂൾ അറ്റകുറ്റപ്പണി"]
+          }
+        },
+        "TEACHER_SHORTAGE": {
+          "aliases": ["teacher shortage", "no teacher", "teachers not available", "teacher absent"],
+          "keywords": {
+            "en": ["no teacher", "teacher shortage", "teachers not available", "teacher absent", "no maths teacher", "no science teacher"],
+            "ta": ["ஆசிரியர் இல்லை", "ஆசிரியர் பற்றாக்குறை"],
+            "hi": ["शिक्षक नहीं", "शिक्षक की कमी", "अध्यापक नहीं"],
+            "te": ["ఉపాధ్యాయుడు లేడు", "టీచర్ లేరు"],
+            "bn": ["শিক্ষক নেই", "শিক্ষকের অভাব"],
+            "kn": ["ಶಿಕ್ಷಕರಿಲ್ಲ", "ಶಿಕ್ಷಕರ ಕೊರತೆ"],
+            "ml": ["അധ്യാപകൻ ഇല്ല", "അധ്യാപക ക്ഷാമം"]
+          }
+        },
+        "SCHOOL_ACCESS": {
+          "aliases": ["school access", "no school", "school is far", "school bus"],
+          "keywords": {
+            "en": ["school is far", "no school", "school access", "school bus", "walk to school"],
+            "ta": ["பள்ளி தூரம்", "பள்ளி இல்லை", "பள்ளி பஸ்"],
+            "hi": ["स्कूल दूर है", "स्कूल नहीं", "स्कूल बस"],
+            "te": ["పాఠశాల దూరంగా ఉంది", "పాఠశాల లేదు", "స్కూల్ బస్సు"],
+            "bn": ["স্কুল অনেক দূরে", "স্কুল নেই", "স্কুল বাস"],
+            "kn": ["ಶಾಲೆ ದೂರದಲ್ಲಿದೆ", "ಶಾಲೆ ಇಲ್ಲ", "ಶಾಲಾ ಬಸ್"],
+            "ml": ["സ്കൂൾ ദൂരെയാണ്", "സ്കൂൾ ഇല്ല", "സ്കൂൾ ബസ്"]
+          }
+        }
+      }
+    },
+    "SANITATION": {
+      "aliases": {
+        "en": ["sanitation", "sewage", "sewer", "drainage", "garbage", "toilet", "waste", "cleanliness"],
+        "ta": ["சுத்தம்", "கழிவுநீர்", "குப்பை", "கழிப்பறை"],
+        "hi": ["सफाई", "सीवर", "कचरा", "शौचालय"],
+        "te": ["పారిశుధ్యం", "మురుగు", "చెత్త", "మరుగుదొడ్డి"],
+        "bn": ["স্যানিটেশন", "নর্দমা", "আবর্জনা", "শৌচালয়"],
+        "kn": ["ನೈರ್ಮಲ್ಯ", "ಒಳಚರಂಡಿ", "ಕಸ", "ಶೌಚಾಲಯ"],
+        "ml": ["ശുചിത്വം", "മലിനജലം", "മാലിന്യം", "ശൗചാലയം"]
+      },
+      "sub_categories": {
+        "SEWAGE": {
+          "aliases": ["sewage", "sewer", "sewer overflow", "sewage overflow", "gutter overflow", "sewage smell"],
+          "keywords": {
+            "en": ["sewer overflow", "sewage overflow", "sewage smell", "sewage", "sewer", "gutter overflow"],
+            "ta": ["கழிவுநீர் தேங்குகிறது", "கழிவுநீர்", "சாக்கடை அடைப்பு", "சாக்கடை"],
+            "hi": ["सीवर ओवरफ्लो", "सीवर", "नाली बह रही है"],
+            "te": ["మురుగు నీరు పొంగుతోంది", "మురుగు"],
+            "bn": ["নর্দমা উপচে পড়ছে", "নর্দমা", "পয়ঃনিষ্কাশন"],
+            "kn": ["ಒಳಚರಂಡಿ ಉಕ್ಕಿ ಹರಿಯುತ್ತಿದೆ", "ಒಳಚರಂಡಿ", "ಚರಂಡಿ"],
+            "ml": ["ഓവർഫ്ലോ", "മലിനജലം", "ചാല്"]
+          }
+        },
+        "DRAINAGE": {
+          "aliases": ["drainage", "drain", "drain blocked", "waterlogging", "flooding", "storm water drain"],
+          "keywords": {
+            "en": ["drain blocked", "storm water drain", "drainage", "drain overflow", "waterlogging", "flooding", "drain"],
+            "ta": ["வடிகால் அடைப்பு", "வடிகால்", "தண்ணீர் தேங்குகிறது", "வெள்ளம்"],
+            "hi": ["नाली बंद", "जलभराव", "जल निकासी", "नाली", "बाढ़"],
+            "te": ["కాలువ పూడుకుపోయింది", "నీరు నిలిచిపోతోంది", "కాలువ", "వరద"],
+            "bn": ["ড্রেন বন্ধ", "জল জমা", "নিকাশি", "বন্যা"],
+            "kn": ["ಚರಂಡಿ ಕಟ್ಟಿಕೊಂಡಿದೆ", "ನೀರು ನಿಂತಿದೆ", "ಚರಂಡಿ", "ಪ್ರವಾಹ"],
+            "ml": ["ഡ്രെയിൻ അടഞ്ഞു", "വെള്ളം കെട്ടിനിൽക്കുന്നു", "ഡ്രെയിനേജ്", "വെള്ളപ്പൊക്കം"]
+          }
+        },
+        "SOLID_WASTE": {
+          "aliases": ["garbage", "solid waste", "solid_waste", "waste collection", "trash", "garbage dump", "no dustbin"],
+          "keywords": {
+            "en": ["garbage not collected", "waste not collected", "garbage dump", "garbage", "solid waste", "waste collection", "no dustbin", "trash"],
+            "ta": ["குப்பை அள்ளப்படவில்லை", "குப்பை தொட்டி", "குப்பை", "கழிவு"],
+            "hi": ["कचरा नहीं उठाया", "कचरा डंप", "कचरा", "कूड़ा"],
+            "te": ["చెత్త తీయలేదు", "చెత్త కుప్ప", "చెత్త"],
+            "bn": ["আবর্জনা তোলা হচ্ছে না", "আবর্জনা", "ময়লা"],
+            "kn": ["ಕಸ ಎತ್ತದೆ", "ಕಸದ ರಾಶಿ", "ಕಸ"],
+            "ml": ["മാലിന്യം നീക്കിയിട്ടില്ല", "മാലിന്യം", "ചപ്പ്"]
+          }
+        },
+        "PUBLIC_TOILETS": {
+          "aliases": ["public toilet", "community toilet", "no toilet", "toilet not clean", "toilet"],
+          "keywords": {
+            "en": ["public toilet", "community toilet", "no toilet", "toilet not clean", "open defecation", "toilet"],
+            "ta": ["பொது கழிப்பறை", "கழிப்பறை இல்லை", "கழிப்பறை சுத்தமில்லை"],
+            "hi": ["सार्वजनिक शौचालय", "शौचालय नहीं", "शौचालय गंदा"],
+            "te": ["పబ్లిక్ టాయిలెట్", "మరుగుదొడ్డి లేదు", "టాయిలెట్ శుభ్రంగా లేదు"],
+            "bn": ["পাবলিক টয়লেট", "শৌচালয় নেই", "টয়লেট পরিষ্কার নয়"],
+            "kn": ["ಸಾರ್ವಜನಿಕ ಶೌಚಾಲಯ", "ಶೌಚಾಲಯ ಇಲ್ಲ", "ಶೌಚಾಲಯ ಸ್ವಚ್ಛವಿಲ್ಲ"],
+            "ml": ["പൊതു ശൗചാലയം", "ശൗചാലയം ഇല്ല", "ശൗചാലയം വൃത്തിയല്ല"]
+          }
+        }
+      }
+    },
+    "TRANSPORT": {
+      "aliases": {
+        "en": ["transport", "transportation", "bus", "bridge", "public transport", "connectivity"],
+        "ta": ["போக்குவரத்து", "பஸ்", "பாலம்"],
+        "hi": ["परिवहन", "बस", "पुल"],
+        "te": ["రవాణా", "బస్సు", "వంతెన"],
+        "bn": ["পরিবহন", "বাস", "সেতু"],
+        "kn": ["ಸಾರಿಗೆ", "ಬಸ್", "ಸೇತುವೆ"],
+        "ml": ["ഗതാഗതം", "ബസ്", "പാലം"]
+      },
+      "sub_categories": {
+        "BRIDGE_DAMAGE": {
+          "aliases": ["bridge", "bridge damage", "bridge_damage", "damaged bridge", "broken bridge", "dangerous bridge", "bridge needs repair", "bridge collapse"],
+          "keywords": {
+            "en": ["bridge needs repair", "bridge is broken", "bridge damaged", "bridge collapse", "damaged bridge", "broken bridge", "dangerous bridge", "bridge repair", "bridge is damaged", "bridge"],
+            "ta": ["சேதமடைந்த பாலம்", "பாலம் உடைந்தது", "பாலம் பழுது", "பாலம்"],
+            "hi": ["टूटा पुल", "पुल क्षतिग्रस्त", "पुल की मरम्मत", "जर्जर पुल", "पुल"],
+            "te": ["వంతెన దెబ్బతింది", "పాడైన వంతెన", "వంతెన"],
+            "bn": ["ভাঙা সেতু", "সেতু ক্ষতিগ্রস্ত", "সেতু মেরামত", "সেতু"],
+            "kn": ["ಹಾಳಾದ ಸೇತುವೆ", "ಸೇತುವೆ ದುರಸ್ತಿ", "ಸೇತುವೆ"],
+            "ml": ["തകർന്ന പാലം", "പാലം അറ്റകുറ്റപ്പണി", "പാലം"]
+          }
+        },
+        "PUBLIC_TRANSPORT": {
+          "aliases": ["public transport", "public_transport", "bus service", "no bus", "bus frequency", "no bus service"],
+          "keywords": {
+            "en": ["no bus service", "bus service", "bus frequency", "irregular bus", "bus timing", "public transport", "transport problem", "no bus"],
+            "ta": ["பஸ் வசதி", "பஸ் இல்லை", "பேருந்து", "போக்குவரத்து வசதி"],
+            "hi": ["बस सेवा", "बस नहीं", "बस का समय", "सार्वजनिक परिवहन"],
+            "te": ["బస్సు సౌకర్యం", "బస్సు లేదు", "ప్రజా రవాణా"],
+            "bn": ["বাস পরিষেবা", "বাস নেই", "গণপরিবহন"],
+            "kn": ["ಬಸ್ ಸೇವೆ", "ಬಸ್ ಇಲ್ಲ", "ಸಾರ್ವಜನಿಕ ಸಾರಿಗೆ"],
+            "ml": ["ബസ് സർവീസ്", "ബസ് ഇല്ല", "പൊതുഗതാഗതം"]
+          }
+        },
+        "BUS_SHELTER": {
+          "aliases": ["bus shelter", "bus stop", "bus stand no roof", "no shelter at bus stop"],
+          "keywords": {
+            "en": ["no shelter at bus stop", "bus shelter", "bus stop", "bus stand no roof"],
+            "ta": ["பஸ் நிலையம்", "பஸ் ஷெல்டர்", "பஸ் நிறுத்தம்"],
+            "hi": ["बस शेल्टर", "बस स्टॉप", "बस स्टैंड"],
+            "te": ["బస్ షెల్టర్", "బస్ స్టాప్"],
+            "bn": ["বাস শেল্টার", "বাস স্টপ"],
+            "kn": ["ಬಸ್ ಶೆಲ್ಟರ್", "ಬಸ್ ನಿಲ್ದಾಣ"],
+            "ml": ["ബസ് ഷെൽട്ടർ", "ബസ് സ്റ്റോപ്പ്"]
+          }
+        },
+        "ROAD_TRANSPORT": {
+          "aliases": ["road transport", "road connectivity", "no road connectivity", "transport facility", "last mile connectivity"],
+          "keywords": {
+            "en": ["no road connectivity", "road not connected", "transport facility", "connectivity to village", "last mile connectivity", "no transport"],
+            "ta": ["சாலை இணைப்பு இல்லை", "போக்குவரத்து இல்லை"],
+            "hi": ["सड़क संपर्क नहीं", "परिवहन सुविधा नहीं"],
+            "te": ["రోడ్డు సంబంధం లేదు", "రవాణా సౌకర్యం లేదు"],
+            "bn": ["সড়ক সংযোগ নেই", "পরিবহন সুবিধা নেই"],
+            "kn": ["ರಸ್ತೆ ಸಂಪರ್ಕ ಇಲ್ಲ", "ಸಾರಿಗೆ ಸೌಲಭ್ಯ ಇಲ್ಲ"],
+            "ml": ["റോഡ് കണക്ടിവിറ്റി ഇല്ല", "ഗതാഗത സൗകര്യം ഇല്ല"]
+          }
+        }
+      }
+    },
+    "DIGITAL_CONNECTIVITY": {
+      "aliases": {
+        "en": ["digital", "internet", "broadband", "network", "wifi", "connectivity"],
+        "ta": ["இணையம்", "இணைய வசதி", "டிஜிட்டல்"],
+        "hi": ["इंटरनेट", "डिजिटल", "नेटवर्क"],
+        "te": ["ఇంటర్నెట్", "డిజిటల్", "నెట్‌వర్క్"],
+        "bn": ["ইন্টারনেট", "ডিজিটাল", "নেটওয়ার্ক"],
+        "kn": ["ಇಂಟರ್ನೆಟ್", "ಡಿಜಿಟಲ್", "ನೆಟ್‌ವರ್ಕ್"],
+        "ml": ["ഇന്റർനെറ്റ്", "ഡിജിറ്റൽ", "നെറ്റ്‌വർക്ക്"]
+      },
+      "sub_categories": {
+        "INTERNET_CONNECTIVITY": {
+          "aliases": ["internet", "internet connectivity", "broadband", "no internet", "no internet connection", "fiber connection", "internet not working"],
+          "keywords": {
+            "en": ["internet not working", "no internet connection", "no internet", "slow internet", "fiber connection", "fibre connection", "broadband", "internet"],
+            "ta": ["இணையம் இல்லை", "இணையதள வசதி", "இணையம்", "பிராட்பேண்ட்"],
+            "hi": ["इंटरनेट नहीं", "इंटरनेट काम नहीं कर रहा", "ब्रॉडबैंड", "इंटरनेट"],
+            "te": ["ఇంటర్నెట్ లేదు", "బ్రాడ్‌బ్యాండ్", "ఇంటర్నెట్"],
+            "bn": ["ইন্টারনেট নেই", "ব্রডব্যান্ড", "ইন্টারনেট"],
+            "kn": ["ಇಂಟರ್ನೆಟ್ ಇಲ್ಲ", "ಬ್ರಾಡ್‌ಬ್ಯಾಂಡ್", "ಇಂಟರ್ನೆಟ್"],
+            "ml": ["ഇന്റർനെറ്റ് ഇല്ല", "ബ്രോഡ്ബാൻഡ്", "ഇന്റർനെറ്റ്"]
+          }
+        },
+        "MOBILE_NETWORK": {
+          "aliases": ["mobile network", "mobile_network", "no network", "network problem", "no signal", "mobile tower", "call drops"],
+          "keywords": {
+            "en": ["mobile network", "no network", "network problem", "no signal", "poor signal", "mobile tower", "call drops", "4g not available"],
+            "ta": ["மொபைல் சிக்னல்", "நெட்வொர்க் இல்லை", "சிக்னல் இல்லை"],
+            "hi": ["मोबाइल नेटवर्क", "नेटवर्क नहीं", "सिग्नल नहीं", "कॉल ड्रॉप"],
+            "te": ["మొబైల్ నెట్‌వర్క్", "సిగ్నల్ లేదు", "నెట్‌వర్క్ సమస్య"],
+            "bn": ["মোবাইল নেটওয়ার্ক", "নেটওয়ার্ক নেই", "সিগন্যাল নেই"],
+            "kn": ["ಮೊಬೈಲ್ ನೆಟ್‌ವರ್ಕ್", "ನೆಟ್‌ವರ್ಕ್ ಇಲ್ಲ", "ಸಿಗ್ನಲ್ ಇಲ್ಲ"],
+            "ml": ["മൊബൈൽ നെറ്റ്‌വർക്ക്", "നെറ്റ്‌വർക്ക് ഇല്ല", "സിഗ്നൽ ഇല്ല"]
+          }
+        },
+        "PUBLIC_WIFI": {
+          "aliases": ["public wifi", "wifi not working", "free wifi", "wifi hotspot", "public wi-fi"],
+          "keywords": {
+            "en": ["public wifi", "wifi not working", "free wifi", "wifi hotspot"],
+            "ta": ["பொது வைஃபை", "வைஃபை வேலை செய்யவில்லை"],
+            "hi": ["पब्लिक वाईफाई", "फ्री वाईफाई", "वाईफाई काम नहीं कर रहा"],
+            "te": ["పబ్లిక్ వైఫై", "ఉచిత వైఫై", "వైఫై పనిచేయడం లేదు"],
+            "bn": ["পাবলিক ওয়াইফাই", "ফ্রি ওয়াইফাই", "ওয়াইফাই কাজ করছে না"],
+            "kn": ["ಸಾರ್ವಜನಿಕ ವೈಫೈ", "ಉಚಿತ ವೈಫೈ", "ವೈಫೈ ಕೆಲಸ ಮಾಡುತ್ತಿಲ್ಲ"],
+            "ml": ["പബ്ലിക് വൈഫൈ", "സൗജന്യ വൈഫൈ", "വൈഫൈ പ്രവർത്തിക്കുന്നില്ല"]
+          }
+        }
+      }
+    },
+    "HOUSING": {
+      "aliases": {
+        "en": ["housing", "house", "home", "shelter", "accommodation"],
+        "ta": ["வீடு", "வீட்டு வசதி", "குடியிருப்பு"],
+        "hi": ["आवास", "घर", "मकान"],
+        "te": ["గృహం", "ఇల్లు", "నివాసం"],
+        "bn": ["আবাসন", "বাড়ি"],
+        "kn": ["ವಸತಿ", "ಮನೆ"],
+        "ml": ["ഭവനം", "വീട്"]
+      },
+      "sub_categories": {
+        "HOUSING_SCHEME": {
+          "aliases": ["housing scheme", "pmay", "pm awas", "housing list", "house allotment", "housing application", "no house"],
+          "keywords": {
+            "en": ["housing scheme", "pmay", "pm awas", "housing list", "house allotment", "housing application", "no house"],
+            "ta": ["வீட்டு வசதி திட்டம்", "வீடு கிடைக்கவில்லை", "வீட்டு மனை"],
+            "hi": ["आवास योजना", "पीएम आवास", "घर नहीं मिला", "आवास आवंटन"],
+            "te": ["గృహ పథకం", "ఇల్లు లేదు", "గృహ కేటాయింపు"],
+            "bn": ["আবাসন প্রকল্প", "বাড়ি নেই", "আবাসন বরাদ্দ"],
+            "kn": ["ವಸತಿ ಯೋಜನೆ", "ಮನೆ ಸಿಗಲಿಲ್ಲ", "ವಸತಿ ಹಂಚಿಕೆ"],
+            "ml": ["ഭവന പദ്ധതി", "വീട് ഇല്ല", "ഭവന വിതരണം"]
+          }
+        },
+        "PUBLIC_HOUSING": {
+          "aliases": ["public housing", "government housing", "rental housing", "slum housing", "housing colony", "housing repair"],
+          "keywords": {
+            "en": ["public housing", "government housing", "rental housing", "slum housing", "housing colony", "quarter repair", "housing repair"],
+            "ta": ["அரசு வீடு", "குடிசை", "வீட்டு பழுது"],
+            "hi": ["सरकारी आवास", "स्लम", "आवास मरम्मत", "क्वार्टर मरम्मत"],
+            "te": ["ప్రభుత్వ గృహం", "మురికివాడ", "గృహ మరమ్మత్తు"],
+            "bn": ["সরকারি আবাসন", "বস্তি", "আবাসন মেরামত"],
+            "kn": ["ಸರ್ಕಾರಿ ವಸತಿ", "ಸ್ಲಂ", "ವಸತಿ ದುರಸ್ತಿ"],
+            "ml": ["സർക്കാർ ഭവനം", "ചേരി", "ഭവന അറ്റകുറ്റപ്പണി"]
+          }
+        },
+        "LAND_ENCROACHMENT": {
+          "aliases": ["land encroachment", "encroachment", "illegal occupation", "land grabbing"],
+          "keywords": {
+            "en": ["land encroachment", "encroachment", "illegal occupation", "occupied land", "land grabbing"],
+            "ta": ["நில ஆக்கிரமிப்பு", "ஆக்கிரமிப்பு", "சட்டவிரோத ஆக்கிரமிப்பு"],
+            "hi": ["अतिक्रमण", "जमीन पर कब्जा", "अवैध कब्जा"],
+            "te": ["భూమి ఆక్రమణ", "ఆక్రమణ", "అక్రమ ఆక్రమణ"],
+            "bn": ["জমি দখল", "দখল", "অবৈধ দখল"],
+            "kn": ["ಜಮೀನು ಅತಿಕ್ರಮಣ", "ಅತಿಕ್ರಮಣ", "ಅಕ್ರಮ ಸ್ವಾಧೀನ"],
+            "ml": ["ഭൂമി കയ്യേറ്റം", "കയ്യേറ്റം", "അനധികൃത കയ്യേറ്റം"]
+          }
+        }
+      }
+    },
+    "PUBLIC_SAFETY": {
+      "aliases": {
+        "en": ["safety", "crime", "security", "police", "fire", "disaster", "public safety"],
+        "ta": ["பாதுகாப்பு", "குற்றம்", "தீ"],
+        "hi": ["सुरक्षा", "अपराध", "आग", "पुलिस"],
+        "te": ["భద్రత", "నేరం", "అగ్ని"],
+        "bn": ["নিরাপত্তা", "অপরাধ", "আগুন"],
+        "kn": ["ಸುರಕ್ಷತೆ", "ಅಪರಾಧ", "ಬೆಂಕಿ"],
+        "ml": ["സുരക്ഷ", "കുറ്റകൃത്യം", "തീ"]
+      },
+      "sub_categories": {
+        "STREET_CRIME": {
+          "aliases": ["crime", "theft", "robbery", "chain snatching", "illegal liquor", "gambling", "street crime"],
+          "keywords": {
+            "en": ["chain snatching", "illegal liquor", "street crime", "robbery", "theft", "gambling", "drugs", "crime", "unsafe area"],
+            "ta": ["திருட்டு", "கொள்ளை", "சட்டவிரோத மது", "போதை", "குற்றம்"],
+            "hi": ["चोरी", "डकैती", "अवैध शराब", "नशा", "जुआ", "अपराध"],
+            "te": ["దొంగతనం", "దోపిడీ", "అక్రమ మద్యం", "మత్తు పదార్థాలు", "నేరం"],
+            "bn": ["চুরি", "ডাকাতি", "অবৈধ মদ", "মাদক", "অপরাধ"],
+            "kn": ["ಕಳ್ಳತನ", "ದರೋಡೆ", "ಅಕ್ರಮ ಮದ್ಯ", "ಮಾದಕ ವಸ್ತು", "ಅಪರಾಧ"],
+            "ml": ["മോഷണം", "കവർച്ച", "നിരോധിത മദ്യം", "മയക്കുമരുന്ന്", "കുറ്റകൃത്യം"]
+          }
+        },
+        "WOMEN_SAFETY": {
+          "aliases": ["women safety", "women security", "harassment", "eve teasing", "unsafe for women"],
+          "keywords": {
+            "en": ["women safety", "unsafe for women", "women security", "harassment", "eve teasing", "no patrolling"],
+            "ta": ["பெண் பாதுகாப்பு", "பெண்கள் பாதுகாப்பு", "தொந்தரவு"],
+            "hi": ["महिला सुरक्षा", "छेड़छाड़", "उत्पीड़न", "महिलाओं के लिए असुरक्षित"],
+            "te": ["మహిళల భద్రత", "వేధింపులు", "మహిళలకు అసురక్షితం"],
+            "bn": ["নারী নিরাপত্তা", "হয়রানি", "নারীদের জন্য অনিরাপদ"],
+            "kn": ["ಮಹಿಳಾ ಸುರಕ್ಷತೆ", "ಕಿರುಕುಳ", "ಮಹಿಳೆಯರಿಗೆ ಅಸುರಕ್ಷಿತ"],
+            "ml": ["വനിതാ സുരക്ഷ", "പീഡനം", "സ്ത്രീകൾക്ക് സുരക്ഷിതമല്ല"]
+          }
+        },
+        "FIRE_SAFETY": {
+          "aliases": ["fire safety", "fire station", "fire hazard", "no fire extinguisher", "fire truck"],
+          "keywords": {
+            "en": ["fire safety", "no fire extinguisher", "fire station", "fire hazard", "fire truck", "short circuit fire"],
+            "ta": ["தீ பாதுகாப்பு", "தீயணைப்பு", "தீ விபத்து"],
+            "hi": ["अग्नि सुरक्षा", "अग्निशमन", "आग लगने का खतरा", "दमकल"],
+            "te": ["అగ్నిమాపక భద్రత", "అగ్నిమాపక కేంద్రం", "అగ్ని ప్రమాదం"],
+            "bn": ["অগ্নি নিরাপত্তা", "দমকল", "আগুনের ঝুঁকি"],
+            "kn": ["ಅಗ್ನಿ ಸುರಕ್ಷತೆ", "ಅಗ್ನಿಶಾಮಕ", "ಬೆಂಕಿ ಅಪಾಯ"],
+            "ml": ["അഗ്നി സുരക്ഷ", "ഫയർ സ്റ്റേഷൻ", "തീപിടിത്ത സാധ്യത"]
+          }
+        },
+        "DISASTER_RESPONSE": {
+          "aliases": ["disaster", "flood relief", "cyclone", "relief camp", "landslide", "drought relief"],
+          "keywords": {
+            "en": ["flood relief", "disaster", "cyclone", "relief camp", "earthquake damage", "landslide", "drought relief"],
+            "ta": ["பேரிடர்", "வெள்ள நிவாரணம்", "புயல்", "நிவாரண முகாம்"],
+            "hi": ["आपदा", "बाढ़ राहत", "चक्रवात", "राहत शिविर", "भूस्खलन"],
+            "te": ["విపత్తు", "వరద సహాయం", "తుఫాను", "పునరావాస శిబిరం"],
+            "bn": ["দুর্যোগ", "বন্যা ত্রাণ", "ঘূর্ণিঝড়", "ত্রাণ শিবির"],
+            "kn": ["ದುರಂತ", "ಪ್ರವಾಹ ಪರಿಹಾರ", "ಚಂಡಮಾರುತ", "ಪರಿಹಾರ ಶಿಬಿರ"],
+            "ml": ["ദുരന്തം", "വെള്ളപ്പൊക്ക ദുരിതാശ്വാസം", "ചുഴലിക്കാറ്റ്", "ദുരിതാശ്വാസ ക്യാമ്പ്"]
+          }
+        }
+      }
+    }
+  }
+}
