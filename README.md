@@ -99,7 +99,7 @@ The first four modules correspond closely to the ingestion, semantic NLP and nat
 |---|--------|--------|-------|-------------|
 | **2** | [AI Understanding](module-2-ai-understanding/) | Implemented | 96 passing | `python seed_understanding.py` → port `8002` |
 | **4** | [National Data Mesh](module-4-national-data-mesh/) | Implemented | 139 passing | `python seed_mesh.py --reset` → port `8004` |
-| **5** | [Civic Intelligence](module-5-civic-intelligence/) | Implemented | 262 passing | `python seed_intelligence.py --reset` → port `8005` |
+| **5** | [Civic Intelligence](module-5-civic-intelligence/) | Implemented | 267 passing | `python seed_intelligence.py --reset` → port `8005` |
 | **1**, **3**, **6**, **7** | — | Not yet built | — | — |
 
 Each module is a self-contained FastAPI + SQLAlchemy service with its own

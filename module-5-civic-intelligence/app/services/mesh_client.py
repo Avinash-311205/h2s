@@ -122,6 +122,12 @@ def fetch_snapshot(
     Missing tables are treated as "that domain has not been synced yet" and
     skipped, so a mesh that only has GIS loaded still produces a partial (and
     honest) snapshot.
+
+    ``districts`` scopes *every* domain, not just wards. Demand, gaps and
+    projects carry no district of their own - they are keyed on ``ward_code`` -
+    so they are scoped through the ward list the district resolved to. Filtering
+    wards alone would leave the other three domains national, and their rows
+    would then be stored against ward locations that were never copied.
     """
     snapshot = MeshSnapshot()
     with mesh_session(database_url) as session:
@@ -139,44 +145,72 @@ def fetch_snapshot(
                 params.update({f"d{i}": value for i, value in enumerate(districts)})
             snapshot.wards = [dict(row._mapping) for row in session.execute(_text(statement), params)]
 
+        ward_clause, ward_params = _ward_scope(session, districts)
+
         if "citizen_demand" in tables:
+            statement = (
+                "SELECT ward_code, sector, category, window_days, complaint_count, "
+                "critical_count, avg_severity, observed_from, observed_to "
+                "FROM citizen_demand"
+            )
+            statement, params = _scoped(statement, ward_clause, ward_params)
             snapshot.demand = [
-                dict(row._mapping)
-                for row in session.execute(
-                    _text(
-                        "SELECT ward_code, sector, category, window_days, complaint_count, "
-                        "critical_count, avg_severity, observed_from, observed_to "
-                        "FROM citizen_demand"
-                    )
-                )
+                dict(row._mapping) for row in session.execute(_text(statement), params)
             ]
 
         if "gap_records" in tables:
+            statement = (
+                "SELECT ward_code, sector, gap_score, severity, demand_score, "
+                "absence_score, quality_score, recommended_action, "
+                "active_project_count, computed_at FROM gap_records"
+            )
+            statement, params = _scoped(statement, ward_clause, ward_params)
             snapshot.gaps = [
-                dict(row._mapping)
-                for row in session.execute(
-                    _text(
-                        "SELECT ward_code, sector, gap_score, severity, demand_score, "
-                        "absence_score, quality_score, recommended_action, "
-                        "active_project_count, computed_at FROM gap_records"
-                    )
-                )
+                dict(row._mapping) for row in session.execute(_text(statement), params)
             ]
 
         if "investment_projects" in tables:
+            statement = (
+                "SELECT project_code, ward_code, sector, status, title, "
+                "budget_lakhs, spent_lakhs, sanctioned_on, "
+                "expected_completion_on, delay_days FROM investment_projects"
+            )
+            statement, params = _scoped(statement, ward_clause, ward_params)
             snapshot.projects = [
-                dict(row._mapping)
-                for row in session.execute(
-                    _text(
-                        "SELECT project_code, ward_code, sector, status, title, "
-                        "budget_lakhs, spent_lakhs, sanctioned_on, "
-                        "expected_completion_on, delay_days FROM investment_projects"
-                    )
-                )
+                dict(row._mapping) for row in session.execute(_text(statement), params)
             ]
 
     logger.info("mesh_snapshot_fetched", extra=log_extra(snapshot.counts()))
     return snapshot
+
+
+def _ward_scope(session: Session, districts: Optional[list[str]]) -> tuple[str, dict[str, Any]]:
+    """Resolve districts to a reusable ``ward_code IN (...)`` clause.
+
+    Returns ``("", {})`` when no district filter was asked for. When a filter
+    was asked for but resolves to nothing, an always-false clause is returned so
+    the other domains come back empty rather than national.
+    """
+    if not districts:
+        return "", {}
+    placeholders = ",".join(f":ds{i}" for i in range(len(districts)))
+    rows = session.execute(
+        _text(f"SELECT ward_code FROM wards WHERE district IN ({placeholders})"),
+        {f"ds{i}": value for i, value in enumerate(districts)},
+    )
+    codes = [row[0] for row in rows]
+    if not codes:
+        return " WHERE 0 = 1", {}
+    markers = ",".join(f":wc{i}" for i in range(len(codes)))
+    clause = f" WHERE ward_code IN ({markers})"
+    return clause, {f"wc{i}": code for i, code in enumerate(codes)}
+
+
+def _scoped(statement: str, clause: str, params: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    """Append a ward scope to a statement, or pass both through unscoped."""
+    if not clause:
+        return statement, {}
+    return f"{statement}{clause}", dict(params)
 
 
 def _text(statement: str):
@@ -200,12 +234,16 @@ def parse_observed_bounds(row: dict[str, Any]) -> tuple[datetime, datetime]:
     start = _parse_dt(row.get("observed_from"))
     end = _parse_dt(row.get("observed_to"))
     if end is None:
-        # The mesh did not date the window, so anchor it to the current period.
-        # Flooring to the window length keeps re-syncing within the same period
-        # idempotent, and opens a new period only when the period genuinely rolls
-        # over - which is what "the current 30-day window" should mean.
+        # The mesh did not date the window, so anchor it to the current day.
+        # Flooring to midnight is what keeps re-syncing idempotent: within a day
+        # every sync produces the same window_end, so the natural key matches and
+        # nothing is inserted. A new window opens only at the next day boundary.
+        #
+        # Flooring to the hour was tried first and is wrong here - it made each
+        # hourly sync a distinct window, appending up to 24 identical rows per ward
+        # per day and manufacturing a flat "trend" out of one unchanged figure.
         days = int(row.get("window_days") or 30)
-        end = naive_utc(utcnow()).replace(minute=0, second=0, microsecond=0)
+        end = naive_utc(utcnow()).replace(hour=0, minute=0, second=0, microsecond=0)
     if start is None:
         days = int(row.get("window_days") or 30)
         start = end - timedelta(days=days)

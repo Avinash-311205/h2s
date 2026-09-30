@@ -294,10 +294,37 @@ class TestSeedingFromAMesh:
         from datetime import datetime
 
         anchor = seed_module._mesh_anchor(mesh_snapshot)
-        count, start, end = anchor[("CHN-01", "WATER")]
-        assert count == 40
-        assert start == datetime(2026, 6, 1)
-        assert end == datetime(2026, 7, 1)
+        entry = anchor[("CHN-01", "WATER")]
+        assert entry.count == 40
+        assert entry.start == datetime(2026, 6, 1)
+        assert entry.end == datetime(2026, 7, 1)
+
+    def test_anchor_carries_the_meshes_severity_and_critical_share(
+        self, seed_module, mesh_snapshot
+    ):
+        # A seeded row labelled source="mesh" that invented these would be wrong
+        # permanently: a later sync matches its natural key and skips it.
+        anchor = seed_module._mesh_anchor(mesh_snapshot)
+        assert anchor[("CHN-01", "WATER")].critical_count == 3
+        assert anchor[("CHN-01", "WATER")].avg_severity == 3.1
+
+    def test_anchored_row_reproduces_the_mesh_values_exactly(
+        self, seed_module, mesh_snapshot
+    ):
+        import random
+
+        anchor = seed_module._mesh_anchor(mesh_snapshot)
+        rows = seed_module._backfill_demand(
+            seed_module._wards_from_mesh(mesh_snapshot),
+            windows=2,
+            window_days=30,
+            rng=random.Random(1),
+            anchor=anchor,
+        )
+        row = next(r for r in rows if r.source == "mesh" and r.ward_code == "CHN-01")
+        assert row.complaint_count == 40
+        assert row.critical_count == 3
+        assert row.avg_severity == 3.1
 
     def test_seeded_anchored_row_matches_the_mesh_natural_key(self, seed_module, mesh_snapshot):
         # The direct test of "sync after seed inserts nothing": the seeded row and

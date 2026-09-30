@@ -67,6 +67,13 @@ stay independently runnable. Consequences:
 - An unreachable mesh is reported as `mesh_available: false` (HTTP 503 on
   `POST /operations/sync`), never as an empty success.
 
+`POST /operations/sync?district=Madurai` scopes **every** domain, not just wards.
+Demand, gaps and projects carry no district of their own — they are keyed on
+`ward_code` — so they are scoped through the ward list the district resolved to.
+Filtering wards alone would copy the whole country's demand while reporting
+success, and those rows would be stored against ward locations that were never
+copied, landing with a district of `UNKNOWN`.
+
 ## Hotspots
 
 **Normalise before ranking.** Complaint counts alone just rank wards by size.
@@ -215,7 +222,7 @@ detail message.
 python -m pytest
 ```
 
-262 tests covering the statistics, the clustering, every risk rule's firing *and
+267 tests covering the statistics, the clustering, every risk rule's firing *and
 non-firing* conditions, sync idempotency, review-status preservation, and the
 full HTTP contract. `DATABASE_URL` is forced to `sqlite://` in `conftest.py`
 before any import, so the suite cannot touch a real database.

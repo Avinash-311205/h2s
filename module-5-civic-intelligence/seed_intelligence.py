@@ -24,7 +24,8 @@ from __future__ import annotations
 import argparse
 import random
 import sys
-from datetime import timedelta
+from datetime import datetime, timedelta
+from typing import NamedTuple
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -110,12 +111,32 @@ def _wards_from_mesh(snapshot) -> list[WardLocation]:
     ]
 
 
+class Anchor(NamedTuple):
+    """The mesh's current demand row for one (ward, sector).
+
+    Carried whole rather than partially so a seeded row labelled ``source="mesh"``
+    carries no invented values - a later sync matches its natural key and skips
+    it, so anything fabricated here would never be corrected.
+    """
+
+    count: int
+    start: datetime
+    end: datetime
+    critical_count: int
+    avg_severity: float
+
+
 def _mesh_anchor(snapshot) -> dict:
-    """``(ward, sector) -> (count, window_start, window_end)`` from the mesh.
+    """``(ward, sector) -> Anchor`` from the mesh.
 
     Carrying the window bounds matters as much as the counts: a seeded anchored
     row then shares its natural key with what a later real sync would write, so
     syncing the mesh afterwards is a no-op instead of a duplicate insert.
+
+    Severity and critical share are carried for the same reason. A later sync
+    cannot repair them either - the natural key already matches, so the row is
+    skipped - which means a row labelled ``source="mesh"`` that generated them
+    would be permanently wrong rather than merely approximate.
     """
     anchor: dict = {}
     for row in snapshot.demand:
@@ -124,7 +145,13 @@ def _mesh_anchor(snapshot) -> dict:
         if not ward_code or not sector:
             continue
         start, end = parse_observed_bounds(row)
-        anchor[(ward_code, sector)] = (int(row.get("complaint_count") or 0), start, end)
+        anchor[(ward_code, sector)] = Anchor(
+            count=int(row.get("complaint_count") or 0),
+            start=start,
+            end=end,
+            critical_count=int(row.get("critical_count") or 0),
+            avg_severity=float(row.get("avg_severity") or 0.0),
+        )
     return anchor
 
 
@@ -187,16 +214,27 @@ def _backfill_demand(
             end = today - timedelta(days=window_days * (period - 1))
             start = end - timedelta(days=window_days)
             source = "seed_history"
+            critical_share = rng.uniform(0.08, 0.25)
+            severity = rng.uniform(1.8, 4.6)
 
             if anchor is not None and period == 1:
                 # The most recent window comes from the mesh, not the generator,
                 # so the seeded history ends exactly where real data begins.
                 anchored = anchor.get((ward_code, sector), count)
-                if isinstance(anchored, tuple):
+                critical_share = rng.uniform(0.08, 0.25)
+                severity = rng.uniform(1.8, 4.6)
+                if isinstance(anchored, Anchor):
+                    count = anchored.count
+                    start, end = anchored.start, anchored.end
+                    critical_share = anchored.critical_count / max(1, anchored.count)
+                    severity = anchored.avg_severity
+                    source = "mesh"
+                elif isinstance(anchored, tuple):
                     count, start, end = anchored[0], anchored[1], anchored[2]
+                    source = "mesh"
                 else:
                     count = int(anchored)
-                source = "mesh"
+                    source = "mesh"
 
             rows.append(
                 DemandWindow(
@@ -207,8 +245,8 @@ def _backfill_demand(
                     window_end=end,
                     window_days=window_days,
                     complaint_count=count,
-                    critical_count=max(0, round(count * rng.uniform(0.08, 0.25))),
-                    avg_severity=round(rng.uniform(1.8, 4.6), 2),
+                    critical_count=max(0, round(count * critical_share)),
+                    avg_severity=round(severity, 2),
                     population=ward.population,
                     source=source,
                     captured_at=end,

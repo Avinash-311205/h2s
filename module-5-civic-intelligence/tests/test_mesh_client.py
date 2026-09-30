@@ -115,6 +115,14 @@ class TestParseObservedBounds:
         start, end = parse_observed_bounds({"window_days": 90})
         assert start < end
 
+    def test_undated_windows_are_stable_within_a_day(self):
+        # The idempotency claim depends on this: every sync on the same day must
+        # produce the same window_end, or re-syncing appends a duplicate row.
+        first = parse_observed_bounds({"window_days": 30})[1]
+        second = parse_observed_bounds({"window_days": 30})[1]
+        assert first == second
+        assert (first.hour, first.minute, first.second) == (0, 0, 0)
+
 
 class TestFetchSnapshot:
     def test_reads_every_domain(self, mesh_db):
@@ -133,13 +141,35 @@ class TestFetchSnapshot:
         assert demand["ward_code"] == "CHN-01"
         assert demand["complaint_count"] == 40
 
-    def test_district_filter_restricts_wards_only(self, mesh_db):
-        snapshot = fetch_snapshot(mesh_db, districts=["Chennai"])
-        assert {ward["district"] for ward in snapshot.wards} == {"Chennai"}
-        assert len(snapshot.demand) == 1
+    def test_district_filter_scopes_every_domain(self, mesh_db):
+        # Filtering wards alone would leave demand, gaps and projects national,
+        # and those rows would then be stored against ward locations that were
+        # never copied - silently, since a district-scoped sync reports success.
+        snapshot = fetch_snapshot(mesh_db, districts=["Madurai"])
+        assert {ward["district"] for ward in snapshot.wards} == {"Madurai"}
+        assert snapshot.demand == []
+        assert snapshot.gaps == []
+        assert snapshot.projects == []
 
-    def test_unknown_district_yields_no_wards(self, mesh_db):
-        assert fetch_snapshot(mesh_db, districts=["Atlantis"]).wards == []
+    def test_district_filter_keeps_matching_rows_across_domains(self, mesh_db):
+        snapshot = fetch_snapshot(mesh_db, districts=["Chennai"])
+        assert {ward["ward_code"] for ward in snapshot.wards} == {"CHN-01"}
+        assert [row["ward_code"] for row in snapshot.demand] == ["CHN-01"]
+        assert [row["ward_code"] for row in snapshot.gaps] == ["CHN-01"]
+        assert [row["ward_code"] for row in snapshot.projects] == ["CHN-01"]
+
+    def test_no_filter_returns_the_whole_mesh(self, mesh_db):
+        snapshot = fetch_snapshot(mesh_db)
+        assert len(snapshot.wards) == 2
+
+    def test_unknown_district_yields_an_empty_snapshot(self, mesh_db):
+        # Not just empty wards: an unmatched district must not fall back to
+        # reading the other domains unfiltered.
+        snapshot = fetch_snapshot(mesh_db, districts=["Atlantis"])
+        assert snapshot.wards == []
+        assert snapshot.demand == []
+        assert snapshot.gaps == []
+        assert snapshot.projects == []
 
     def test_missing_tables_are_skipped_rather_than_fatal(self, tmp_path):
         # A mesh with only GIS loaded should still produce a partial snapshot.
