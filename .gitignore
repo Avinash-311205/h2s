@@ -20,6 +20,13 @@ dist-ssr/
 *.sqlite3
 *.log
 
+# Generated module databases - rebuilt by each module's seed script, never a
+# source artefact. Listed explicitly because the generic *.sqlite3 rule above
+# does not cover the .db suffix these modules use.
+module-*/national_data_mesh.db
+module-*/civic_intelligence.db
+module-*/ai_understanding.db
+
 # OS / editor
 .DS_Store
 .vscode/

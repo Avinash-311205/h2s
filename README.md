@@ -93,6 +93,61 @@ The first four modules correspond closely to the ingestion, semantic NLP and nat
 
 ---
 
+# ✅ Implementation Status
+
+| # | Module | Status | Tests | Run locally |
+|---|--------|--------|-------|-------------|
+| **2** | [AI Understanding](module-2-ai-understanding/) | Implemented | 96 passing | `python seed_understanding.py` → port `8002` |
+| **4** | [National Data Mesh](module-4-national-data-mesh/) | Implemented | 139 passing | `python seed_mesh.py --reset` → port `8004` |
+| **5** | [Civic Intelligence](module-5-civic-intelligence/) | Implemented | 262 passing | `python seed_intelligence.py --reset` → port `8005` |
+| **1**, **3**, **6**, **7** | — | Not yet built | — | — |
+
+Each module is a self-contained FastAPI + SQLAlchemy service with its own
+database, seed script and test suite. Modules 2, 4 and 5 run with no external
+services and no API keys: heavy AI dependencies fall back to deterministic local
+implementations, and SQLite stands in for PostgreSQL locally. Every module
+creates its schema on startup, so a fresh clone runs with no migration step.
+
+### Running the implemented chain
+
+```bash
+# 2. AI Understanding - turn raw citizen input into structured records
+cd module-2-ai-understanding && python seed_understanding.py
+
+# 4. National Data Mesh - join demand, GIS, assets, projects, census on ward_code
+cd ../module-4-national-data-mesh && python seed_mesh.py --reset
+
+# 5. Civic Intelligence - read the mesh, detect hotspots, trends and emerging risks
+cd ../module-5-civic-intelligence && python seed_intelligence.py --reset
+
+python -m uvicorn app.main:app --port 8005     # then open /docs
+```
+
+Module 5 reads Module 4's database as a **snapshot over time** rather than
+calling its API, so it keeps the history that trends need and stays independent
+of whether Module 4 is currently running. Syncing is idempotent: re-syncing
+unchanged data inserts nothing.
+
+### Design principles shared across the implemented modules
+
+- **Explainability over scores.** A gap, hotspot or risk stores the components
+  and evidence that produced it. A reviewer can disagree with a threshold
+  without reverse-engineering a number.
+- **Refuse to invent a finding.** A trend with one observation is `UNKNOWN`, not
+  a guess; a silent ward is not a hotspot; a spike needs an absolute floor so a
+  jump from 1 to 3 is not an emergency.
+- **Normalise before comparing.** Intensity is per 1,000 residents and demand is
+  normalised per sector, so a dense ward or a noisy sector cannot distort the
+  ranking for everyone else.
+- **Boundaries between modules.** Module 4 ranks gaps; Module 5 detects
+  hotspots, trends and emerging risks; Module 6 owns priority scoring and project
+  recommendation. They meet at `ward_code` and `risk_code` rather than
+  duplicating each other's reasoning.
+
+Each module's README documents its own methodology, endpoints and known limits. 
+
+---
+
 # 🛠️ Tech Stack
 
 ### Frontend
