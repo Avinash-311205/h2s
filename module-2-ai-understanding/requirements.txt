@@ -1,0 +1,28 @@
+# Module 2 - AI Understanding (ASR | Translation | NLP | CV)
+# Core runtime
+fastapi==0.111.1
+uvicorn[standard]==0.30.1
+sqlalchemy==2.0.32
+alembic==1.13.2
+pydantic==2.8.2
+pydantic-settings==2.3.4
+python-multipart==0.0.9
+httpx==0.27.0
+pytest==8.3.2
+
+# Optional heavy model dependencies.
+# The module runs fully without these using deterministic local fallbacks
+# (script-frequency language detection, civic-glossary translation, keyword
+# NER/classification and heuristic image analysis), so they are commented out
+# by default to keep installation light and offline-friendly.
+#
+# faster-whisper>=1.0.3        # offline ASR (CTranslate2 Whisper)
+# transformers>=4.41.0         # NLLB-200 translation + optionally IndicBERT NER
+# torch>=2.2.0
+# pillow>=10.3.0               # image decoding / EXIF handling
+# pillow-heif>=0.16.0          # HEIC photos from modern phones
+# numpy>=1.26.0
+
+# Production datastores (module defaults to local SQLite)
+# psycopg2-binary==2.9.9
+# redis==5.0.8
