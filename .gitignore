@@ -2,8 +2,10 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
-.venv/
-venv/
+# Versioned venvs (.venv, .venv311, .venv3.12, ...) - the exact minor version is
+# part of the directory name, so .venv/ alone does not match them.
+.venv*/
+venv*/
 *.egg-info/
 
 # Node / frontend builds
@@ -26,6 +28,11 @@ dist-ssr/
 module-*/national_data_mesh.db
 module-*/civic_intelligence.db
 module-*/ai_understanding.db
+module-*/civic_processing.db
+module-*/priority_recommendation.db
+module-*/synthetic_intelligence.db
+citizen_requests.db
+module-*/citizen_requests.db
 
 # OS / editor
 .DS_Store
