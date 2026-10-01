@@ -98,21 +98,31 @@ The first four modules correspond closely to the ingestion, semantic NLP and nat
 | # | Module | Status | Tests | Run locally |
 |---|--------|--------|-------|-------------|
 | **2** | [AI Understanding](module-2-ai-understanding/) | Implemented | 96 passing | `python seed_understanding.py` → port `8002` |
+| **3** | [Civic Data Processing](module-3-civic-data-processing/) | Implemented | 80 passing | event-driven ETL → port `8003` |
 | **4** | [National Data Mesh](module-4-national-data-mesh/) | Implemented | 139 passing | `python seed_mesh.py --reset` → port `8004` |
 | **5** | [Civic Intelligence](module-5-civic-intelligence/) | Implemented | 267 passing | `python seed_intelligence.py --reset` → port `8005` |
-| **1**, **3**, **6**, **7** | — | Not yet built | — | — |
+| **6** | [Priority & Recommendation](module-6-priority-recommendation/) | Implemented | 112 passing | `python seed_priority.py` → port `8006` |
+| **7** | [Policymaker Dashboard](module-7-policymaker-dashboard/) | Implemented | `npm run build` | `npm run dev` → port `5173` |
+| **1** | [Citizen Ingestion](module-1-citizen-ingestion/) | Partial | — | voice/text capture UI and backend; `redis` dependency unresolved |
 
 Each module is a self-contained FastAPI + SQLAlchemy service with its own
-database, seed script and test suite. Modules 2, 4 and 5 run with no external
-services and no API keys: heavy AI dependencies fall back to deterministic local
+database, seed script and test suite. Modules 2–6 run with no external services
+and no API keys: heavy AI dependencies fall back to deterministic local
 implementations, and SQLite stands in for PostgreSQL locally. Every module
 creates its schema on startup, so a fresh clone runs with no migration step.
 
+There is no root test runner: each module's suite is run from its own directory.
+
 ### Running the implemented chain
+
+Each command runs from a module directory; `cd ..` walks back up.
 
 ```bash
 # 2. AI Understanding - turn raw citizen input into structured records
 cd module-2-ai-understanding && python seed_understanding.py
+
+# 3. Civic Data Processing - validate, de-duplicate and geocode
+cd ../module-3-civic-data-processing && python -m uvicorn app.main:app --port 8003
 
 # 4. National Data Mesh - join demand, GIS, assets, projects, census on ward_code
 cd ../module-4-national-data-mesh && python seed_mesh.py --reset
@@ -120,13 +130,31 @@ cd ../module-4-national-data-mesh && python seed_mesh.py --reset
 # 5. Civic Intelligence - read the mesh, detect hotspots, trends and emerging risks
 cd ../module-5-civic-intelligence && python seed_intelligence.py --reset
 
-python -m uvicorn app.main:app --port 8005     # then open /docs
+# 6. Priority & Recommendation - score the hotspots and build the funding plan
+cd ../module-6-priority-recommendation && python seed_priority.py
+
+# 7. Policymaker Dashboard - serve the decision view
+cd ../module-7-policymaker-dashboard && npm install && npm run dev
+```
+
+Module 6 reads Module 5's SQLite database **directly** rather than calling its
+API, so scoring needs no network and no running upstream service. Startup only
+initialises the schema, which keeps `/health` answerable before anything is
+scored; to produce or refresh the ranking:
+
+```bash
+curl -X POST http://localhost:8006/api/v1/operations/recompute
 ```
 
 Module 5 reads Module 4's database as a **snapshot over time** rather than
 calling its API, so it keeps the history that trends need and stays independent
 of whether Module 4 is currently running. Syncing is idempotent: re-syncing
 unchanged data inserts nothing.
+
+Module 7 distinguishes the two ways its upstream can be unavailable: if Module 6
+is unreachable it says so and names the command to start it, and if Module 6 is
+up but has scored nothing it says that instead. A dashboard that reported both as
+"error" would be hiding which one is actually wrong.
 
 ### Design principles shared across the implemented modules
 

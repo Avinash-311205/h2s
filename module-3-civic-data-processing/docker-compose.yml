@@ -45,7 +45,7 @@ services:
       redis:
         condition: service_healthy
     ports:
-      - "8001:8000"
+      - "8003:8000"
 
 volumes:
   pgdata:

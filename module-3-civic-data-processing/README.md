@@ -183,10 +183,10 @@ cp .env.example .env               # optional; sensible defaults are built in
 
 alembic upgrade head               # or rely on AUTO_CREATE_SCHEMA=true
 
-uvicorn app.main:app --reload --port 8001
+uvicorn app.main:app --reload --port 8003
 ```
 
-Then open <http://localhost:8001/docs>.
+Then open <http://localhost:8003/docs>.
 
 With the defaults the service runs with **zero external dependencies**: SQLite,
 an offline gazetteer and a no-op event transport.
@@ -201,7 +201,7 @@ Starts:
 
 | Service | Address |
 | --- | --- |
-| API | <http://localhost:8001> |
+| API | <http://localhost:8003> |
 | PostgreSQL + PostGIS | `localhost:5433` |
 | Redis | `localhost:6380` |
 
@@ -233,7 +233,7 @@ transport, so they require no network and no running services.
 ## 11. Example request
 
 ```bash
-curl -X POST http://localhost:8001/api/v1/civic/process \
+curl -X POST http://localhost:8003/api/v1/civic/process \
   -H "Content-Type: application/json" \
   -d '{
     "request_id": "REQ-10023",

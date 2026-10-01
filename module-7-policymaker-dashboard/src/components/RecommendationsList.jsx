@@ -1,117 +1,113 @@
 /**
- * Ranked list of recommended projects from Module 6's /recommendations.
+ * The funding plan, in rank order.
  *
- * Includes two dropdown filters (category + region) applied client-side so
- * policymakers can narrow down to their ward / issue type instantly. Being
- * ranked top-to-bottom by priority score, the list doubles as a funding
- * order-of-operations view.
+ * Reads `/api/v1/plan`, which returns a cumulative envelope per row — the
+ * running total is what a budget discussion actually needs, since the question
+ * is usually "how far down the list does X get me" rather than "what does this
+ * one cost".
  */
-import { useMemo, useState } from "react";
-import { priorityBand, priorityColor } from "../utils/priority";
 
-function unique(values) {
-  return [...new Set(values.filter(Boolean))].sort();
+import { useState } from "react";
+import { bandColor, formatLakhs, formatSector } from "../utils/priority";
+
+const FILTERS = ["ALL", "HIGH", "MEDIUM", "LOW"];
+
+function rankClass(rank) {
+  if (rank === 1) return "rank rank--top1";
+  if (rank === 2) return "rank rank--top2";
+  if (rank === 3) return "rank rank--top3";
+  return "rank rank--rest";
 }
 
-function RankBadge({ rank }) {
-  return (
-    <span className={`rank rank--${rank <= 3 ? `top${rank}` : "rest"}`}>
-      #{rank}
-    </span>
-  );
-}
+export default function RecommendationsList({
+  plan,
+  portfolioCount,
+  portfolioTotal,
+  onSelect,
+}) {
+  const [filter, setFilter] = useState("ALL");
+  const rows = plan?.items || [];
+  const isPartial = Boolean(plan?.is_partial);
 
-function ScorePill({ score }) {
-  return (
-    <span
-      className="score-pill"
-      style={{ "--score-color": priorityColor(score) }}
-    >
-      {score} · {priorityBand(score)}
-    </span>
-  );
-}
+  if (rows.length === 0) {
+    return (
+      <section className="recommendations">
+        <h2 className="recommendations__title">Funding plan</h2>
+        <p className="empty-note">
+          No plan yet. Run <code>POST /api/v1/operations/recompute</code> in
+          Module 6.
+        </p>
+      </section>
+    );
+  }
 
-export default function RecommendationsList({ recommendations }) {
-  const [category, setCategory] = useState("all");
-  const [region, setRegion] = useState("all");
-
-  const categories = useMemo(
-    () => unique(recommendations.map((r) => r.category)),
-    [recommendations],
-  );
-  const regions = useMemo(
-    () => unique(recommendations.map((r) => r.region)),
-    [recommendations],
-  );
-
-  // Never filter labels themselves in/out: keep both full dropdowns stable.
-  const filtered = recommendations.filter(
-    (r) =>
-      (category === "all" || r.category === category) &&
-      (region === "all" || r.region === region),
+  const visible = filter === "ALL" ? rows : rows.filter((r) => r.band === filter);
+  const visibleCost = visible.reduce(
+    (sum, r) => sum + (r.recommended_cost_lakhs || 0),
+    0,
   );
 
   return (
     <section className="recommendations">
       <div className="recommendations__toolbar">
-        <h3 className="recommendations__title">Recommended projects</h3>
+        <h2 className="recommendations__title">Funding plan</h2>
         <div className="recommendations__filters">
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            aria-label="Filter by category"
-          >
-            <option value="all">All categories</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <select
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
-            aria-label="Filter by region"
-          >
-            <option value="all">All regions</option>
-            {regions.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
+          {FILTERS.map((f) => (
+            <button
+              key={f}
+              className={`chip${filter === f ? " chip--active" : ""}`}
+              onClick={() => setFilter(f)}
+            >
+              {f === "ALL" ? "All" : f.toLowerCase()}
+            </button>
+          ))}
         </div>
       </div>
 
-      <span className="recommendations__count">
-        {filtered.length} of {recommendations.length} project(s) shown
-      </span>
+      <div className="recommendations__totals">
+        <span>
+          Showing {visible.length} of {portfolioCount ?? rows.length} hotspots
+        </span>
+        <span>{formatLakhs(visibleCost)}</span>
+      </div>
+
+      {isPartial && (
+        <p className="recommendations__warn">
+          Top {rows.length} of {portfolioCount} ranked hotspots. The full
+          ranking carries an indicative envelope of {formatLakhs(portfolioTotal)}.
+        </p>
+      )}
 
       <ol className="rec-list">
-        {filtered.map((rec, i) => (
-          <li key={rec.id} className="rec-card">
-            <RankBadge rank={i + 1} />
+        {visible.map((item) => (
+          <li
+            key={item.hotspot_code}
+            className="rec-card"
+            onClick={() => onSelect?.(item.hotspot_code)}
+          >
+            <span className={rankClass(item.rank)}>{item.rank}</span>
             <div className="rec-card__body">
-              <header className="rec-card__header">
-                <span className="rec-card__title">
-                  {rec.category} — {rec.region}
+              <div className="rec-card__header">
+                <span className="rec-card__title">{item.district}</span>
+                <span
+                  className="score-pill"
+                  style={{ "--score-color": bandColor(item.band) }}
+                >
+                  {item.score}
                 </span>
-                <ScorePill score={rec.priority_score} />
-              </header>
-              <p className="rec-card__rec">{rec.recommendation}</p>
-              <footer className="rec-card__meta">
-                {rec.request_count} requests · avg severity {rec.avg_severity} ·{" "}
-                ~{Math.round(rec.avg_days_open)} days open
-              </footer>
+              </div>
+              <p className="rec-card__rec">{item.recommendation}</p>
+              <p className="rec-card__meta">
+                {formatSector(item.dominant_sector)} ·{" "}
+                {formatLakhs(item.recommended_cost_lakhs)} this ·{" "}
+                <span className="rec-card__cumulative">
+                  {formatLakhs(item.cumulative_cost_lakhs)} cumulative
+                </span>
+              </p>
             </div>
           </li>
         ))}
       </ol>
-
-      {filtered.length === 0 && (
-        <p className="empty-note">No projects match the selected filters.</p>
-      )}
     </section>
   );
 }

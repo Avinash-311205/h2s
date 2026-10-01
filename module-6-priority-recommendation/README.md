@@ -1,103 +1,133 @@
-# Module 6: Priority & Recommendation
+# Module 6 · Priority & Recommendation Engine
 
-FastAPI service that turns raw citizen requests (SQLite) into **prioritised,
-explainable infrastructure hotspots** for policymakers.
+Ranks civic hotspots by need and turns that ranking into a funding plan.
 
-- **DBSCAN** clustering (haversine distance in metres) groups requests into
-  geographic hotspots, computed **per category**.
-- Transparent **Priority Score (0-100)** is a weighted sum of four factors,
-  each with a documented normalisation and weight in `scoring.py` -- fully
-  auditable, not a black box.
-- Plain-language recommendations are generated from deterministic templates.
+This module does **not** re-cluster anything. It reads the hotspots, demand
+windows, coverage gaps, trends and project snapshots that Module 5 produced, and
+scores them. That is a deliberate boundary: the expensive analysis already
+happened upstream, and repeating it here would mean two different answers to the
+same question.
 
-## What it does
-
-```
-citizen_requests.db (requests table)
-        |
-        v
-  [database.py]  read-only sqlite3 access
-        |
-        v
-  [clustering.py]  DBSCAN per category, haversine metres, region geofence
-        |
-        v
-  [scoring.py]     weighted sum: volume(0.35) + severity(0.30)
-                   + population density(0.15) + days open(0.20)  -> 0-100
-        |
-        v
-  FastAPI  ->  GET /hotspots        (score + factor breakdown + evidence)
-               GET /recommendations (top N, ranked, plain-language copy)
-```
-
-## Quick Start
+## Quick start
 
 ```bash
-# 1) (Optional but recommended) create a virtual environment
-python -m venv .venv && source .venv/bin/activate
-
-# 2) Install dependencies
 pip install -r requirements.txt
 
-# 3) Start the API (default port 8006)
-python main.py
-# or: uvicorn api.main:app --host 0.0.0.0 --port 8006 --reload
+# Score the real Module 5 snapshot (seed it first if you have not)
+python ../module-5-civic-intelligence/seed_intelligence.py
+python seed_priority.py
+
+# Or score self-contained demo data, no upstream needed
+python seed_priority.py --synthetic
+
+# Serve the API
+uvicorn app.main:app --port 8006
 ```
 
-The API expects `citizen_requests.db` one level above this module (i.e.
-`../citizen_requests.db`), as created by module-1-citizen-ingestion. Override
-with the `CITIZEN_DB_PATH` environment variable if yours lives elsewhere:
+## Two ideas that shape everything else
+
+**Unmeasured is not zero.** If Module 5 has no trend for a ward-sector, the
+trend factor contributes nothing *and is recorded as unmeasured*. A district
+where nobody reports anything must not score the same as a district where
+nothing is wrong.
+
+To make that distinction visible in the number itself, the composite is scaled
+by `evidence_coverage` — the share of total weight that was actually measured:
+
+```
+score = Σ(component × weight) × evidence_coverage × 100
+```
+
+Partial evidence therefore always scores *lower* than the same reading with full
+evidence, never higher, and `evidence_coverage` is returned with every score so a
+reader can see how much of it rests on real measurement. A hotspot measured on
+three of five factors gets roughly 0.7× the score of the same reading fully
+measured.
+
+**References are fixed policy, not statistics.** The values in
+`app/core/config.py` are the raw measurements that score a full 1.0. They are
+constants on purpose: a percentile taken from today's data would make the same
+complaint count score differently next month purely because the data moved,
+destroying the comparability that the history table exists to provide.
+
+> **Review point.** `ref_max_complaints_per_1000` is set to 5.0, calibrated
+> against the seeded mesh where 30-day rates run 0.8–2.5 per 1,000. An earlier
+> value of 25.0 pushed every real hotspot into the bottom 10% of the factor's
+> range, which silently reduced the heaviest-weighted factor (0.30) to an
+> effective weight near 0.03. Five complaints per 1,000 residents per month is a
+> judgement call about what counts as elevated demand, not a measurement, and it
+> is the number most worth a second opinion from someone who knows the domain.
+
+## Scoring
+
+| Factor | Weight | Measured from | Reference = full marks |
+|---|---|---|---|
+| `demand` | 0.30 | complaints per 1,000 residents | 5.0 / 1,000 |
+| `severity` | 0.20 | average severity | 5.0 |
+| `trend` | 0.20 | direction + % growth | 100% growth |
+| `coverage` | 0.15 | service coverage gap | 100% |
+| `service_failure` | 0.15 | stalled, unspent, delayed | 40% / 50% / 180d |
+
+Each component saturates independently, so one extreme input cannot mask the
+others. Bands: `HIGH ≥ 70`, `MEDIUM ≥ 45`, else `LOW`.
+
+Trend is asymmetric on purpose — worsening and improving by the same percentage
+are different situations, so improving maps to 0 and stable maps to a neutral
+0.25 rather than being treated as healthy or alarming.
+
+## What counts as degraded
+
+If a Module 5 table is missing entirely, the affected factors are marked
+degraded rather than the run failing. Three of five factors still produces a
+usable ranking with visible caveats; no factors produces an error. A ranking
+built from partial data is far more useful to a policymaker than a blank page.
+
+Directional vocabulary is shared verbatim with Module 5 (`WORSENING`,
+`IMPROVING`, `STABLE`) rather than translated. An earlier version used
+`RISING`/`FALLING`, which matched nothing upstream: every hotspot fell through
+to a zero trend contribution while still reporting `measured=True`, so the trend
+factor silently did nothing on real data. `tests/test_intelligence_client.py`
+guards against that recurring.
+
+## API
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/health` | Works before any recompute — 0 scored is a valid answer |
+| GET | `/health/intelligence` | Table presence and degradation detail |
+| GET | `/api/v1/priorities` | Full ranking; `?district=`, `?band=` |
+| GET | `/api/v1/priorities/summary` | Portfolio totals |
+| GET | `/api/v1/plan` | Funding plan, `?size=` |
+| GET | `/api/v1/priorities/{code}/history` | Previous rankings for one hotspot |
+| GET | `/api/v1/operations/runs` | Run audit log |
+| POST | `/api/v1/operations/recompute` | Rescore from the current snapshot |
+
+Status codes carry meaning:
+
+- **409** — the service is healthy but nothing has been scored yet. A workflow
+  state the user can act on, distinct from a failure.
+- **503** — Module 5's database is missing or unreadable.
+- **422** — an invalid filter.
+
+A failed recompute returns an error *and leaves the previous ranking intact*,
+with the failure recorded on the run log. It never leaves stale scores looking
+current.
+
+## Data model
+
+Three tables. `priority_scores` holds only the current ranking and is replaced
+wholesale per run, so reads never see a half-finished recompute.
+`priority_history` is append-only and holds previous rankings.
+`priority_runs` records what each run attempted, whether it succeeded, and its
+error if not.
+
+## Tests
 
 ```bash
-CITIZEN_DB_PATH=/path/to/citizen_requests.db python main.py
+python -m pytest          # 112 passing
 ```
 
-Open interactive docs at http://localhost:8006/docs
-
-## API Endpoints
-
-| Method | Endpoint           | Description                                           |
-| ------ | ------------------ | ----------------------------------------------------- |
-| GET    | `/health`          | Liveness probe + DB availability                      |
-| GET    | `/hotspots`        | All hotspots: centroid, category, count, score, factor breakdown, sample complaint texts |
-| GET    | `/recommendations` | Top N hotspots ranked by `priority_score`, each with a plain-language recommendation string |
-
-## Priority Score (0-100) -- how it works
-
-Each hotspot's score is the weighted sum of **four normalised factors**:
-
-| Factor             | Weight | Raw input                    | Why it matters                               |
-| ------------------ | ------ | ---------------------------- | -------------------------------------------- |
-| Volume             | 0.35   | `request_count`              | More citizens complaining = more affected    |
-| Severity           | 0.30   | `avg_severity` (1-5)         | Critical issues need faster response         |
-| Population density | 0.15   | mock region -> people/sq.km  | Same issue hits more people in dense wards   |
-| Days open          | 0.20   | `avg_days_open`              | Ignored complaints signal service failure    |
-
-Each raw factor is normalised to 0-100 against a documented reference maximum,
-then multiplied by its weight. Because the weights sum to 1.0, the result is
-already a 0-100 score. Every factor's `raw`, `normalised`, `weight`, and
-`contribution` are returned in the API so the total is fully derivable by hand.
-
-> **Note on population density**: currently a static mock lookup (`scoring.py`
-> `POPULATION_DENSITY`) keyed by the region geofence in `clustering.py`.
-> Swap in a real census/LGD dataset to productionise.
-
-## Folder Structure
-
-```
-module-6-priority-recommendation/
-├── main.py            # uvicorn entrypoint
-├── scoring.py         # transparent weighted priority logic (judge-facing)
-├── clustering.py      # DBSCAN + haversine + region geofence
-├── database.py        # read-only sqlite3 access
-├── api/
-│   ├── __init__.py
-│   ├── main.py        # FastAPI routes
-│   └── schemas.py     # Pydantic response models
-├── requirements.txt
-└── README.md
-```
-
-## License
-
-Academic project.
+The suite concentrates on the behaviours that are easy to get subtly wrong:
+that unmeasured never scores like measured-zero, that partial evidence cannot
+inflate a score, that a failed run leaves the previous ranking readable, and that
+the trend vocabulary actually matches the upstream database.
