@@ -15,10 +15,12 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.ingest_routes import ingest_router
 from app.api.routes import gap_router, health_router, investment_router, mesh_router
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.database.connection import init_db
+from app.events.consumer import start_consumer, stop_consumer
 
 configure_logging()
 logger = get_logger(__name__)
@@ -26,14 +28,21 @@ logger = get_logger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Create the schema on startup and log the surface we are exposing."""
+    """Create the schema, consume Module 3's output, log the exposed surface."""
     if settings.auto_create_schema:
         init_db()
     logger.info(
         "module_started",
         extra={"service": settings.service_name, "version": settings.version},
     )
+
+    if settings.pipeline_consumer_enabled:
+        start_consumer()
+    else:
+        logger.info("pipeline_consumer_disabled")
+
     yield
+    stop_consumer()
 
 
 app = FastAPI(
@@ -58,10 +67,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mounted under the API prefix like every other module, so one probe path
+# works across Modules 1-4. The unprefixed /health is kept as an alias because
+# that is where this module has always published it.
+app.include_router(health_router, prefix=settings.api_prefix)
 app.include_router(health_router)
 app.include_router(mesh_router, prefix=settings.api_prefix)
 app.include_router(gap_router, prefix=settings.api_prefix)
 app.include_router(investment_router, prefix=settings.api_prefix)
+app.include_router(ingest_router, prefix=settings.api_prefix)
 
 
 @app.get("/", include_in_schema=False)
@@ -72,7 +86,7 @@ def root() -> dict:
         "version": settings.version,
         "docs": "/docs",
         "endpoints": {
-            "health": "/health",
+            "health": f"{settings.api_prefix}/health",
             "catalog": f"{settings.api_prefix}/catalog",
             "quality": f"{settings.api_prefix}/quality",
             "wards": f"{settings.api_prefix}/wards",

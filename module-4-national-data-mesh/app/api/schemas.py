@@ -188,6 +188,30 @@ class DemandTotalOut(BaseModel):
     avg_severity: float
 
 
+class DemandOut(BaseModel):
+    """One aggregate demand row, as the gap analysis consumes it.
+
+    ``source`` is carried through deliberately: it distinguishes demand that
+    arrived from a real citizen submission (``module-4-ingest``) from seeded
+    demo data (``synthetic``), so a reader is never misled about provenance.
+    """
+
+    ward_code: str
+    sector: str
+    category: str
+    sub_category: str
+    window_days: int
+    complaint_count: int
+    avg_severity: float
+    max_severity: int
+    critical_count: int
+    languages: list[str]
+    observed_from: Optional[str] = None
+    observed_to: Optional[str] = None
+    source: str
+    updated_at: Optional[str] = None
+
+
 class CapacityTargetsOut(BaseModel):
     """Per-asset-type population coverage, for transparency in the UI."""
 

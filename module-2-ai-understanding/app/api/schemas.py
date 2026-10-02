@@ -25,6 +25,12 @@ class HealthOut(BaseModel):
     database_ready: bool
     records: int
     by_status: dict[str, int] = {}
+    # Pipeline wiring (Module 1 -> Module 2 -> Module 3). Surfaced so a broken
+    # handoff is visible from the health endpoint instead of showing up as
+    # "healthy but nothing ever arrives".
+    consumer: dict[str, Any] = {}
+    events: dict[str, int] = {}
+    upstream_ingestion: dict[str, Any] = {}
 
 
 class CapabilitiesOut(BaseModel):

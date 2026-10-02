@@ -23,6 +23,8 @@ pytest==8.3.2
 # pillow-heif>=0.16.0          # HEIC photos from modern phones
 # numpy>=1.26.0
 
-# Production datastores (module defaults to local SQLite)
+# Redis: required for the Module 1 -> Module 2 -> Module 3 event handoff.
+redis==5.0.8
+
+# Production datastore (module defaults to local SQLite)
 # psycopg2-binary==2.9.9
-# redis==5.0.8

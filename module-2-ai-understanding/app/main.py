@@ -14,6 +14,9 @@ from app.api.routes import analytics_router, health_router, understand_router
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.database.connection import init_db
+from app.events.consumer import start_consumer, stop_consumer
+from app.events.publisher import publisher_for_session
+from app.database.connection import SessionLocal
 
 logger = get_logger(__name__)
 
@@ -33,7 +36,26 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     )
     if settings.auto_create_schema:
         init_db()
+
+    if settings.pipeline_consumer_enabled:
+        # Replay anything a previous Redis outage stranded before listening
+        # for new work, so Module 3 receives the backlog.
+        if settings.pipeline_retry_on_startup:
+            db = SessionLocal()
+            try:
+                summary = publisher_for_session(db).retry_pending()
+                if summary["attempted"]:
+                    logger.info("startup_event_retry", extra=summary)
+            except Exception as exc:  # never block startup on the outbox
+                logger.warning("startup_event_retry_failed", extra={"error": str(exc)})
+            finally:
+                db.close()
+        start_consumer()
+    else:
+        logger.info("pipeline_consumer_disabled")
+
     yield
+    stop_consumer()
     logger.info("service_stopping", extra={"service": settings.service_name})
 
 

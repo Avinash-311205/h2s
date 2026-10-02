@@ -13,7 +13,7 @@ from app.services import capacity_service
 
 
 def test_health_reports_ok_when_wards_exist(client):
-    response = client.get("/health")
+    response = client.get("/api/v1/health")
 
     assert response.status_code == 200
     body = response.json()
@@ -30,7 +30,7 @@ def test_health_is_degraded_without_wards(client, db):
     db.query(Ward).delete()
     db.commit()
 
-    body = client.get("/health").json()
+    body = client.get("/api/v1/health").json()
 
     assert body["status"] == "degraded"
     assert body["database_ready"] is False

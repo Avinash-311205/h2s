@@ -7,6 +7,7 @@ than a silent omission.
 
 from __future__ import annotations
 
+from app.models.understanding_event import UnderstandingEvent
 from app.models.understanding_record import UnderstandingRecord
 
-__all__ = ["UnderstandingRecord"]
+__all__ = ["UnderstandingEvent", "UnderstandingRecord"]

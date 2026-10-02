@@ -329,7 +329,10 @@ def build_demand(rng: random.Random, wards: list[Ward], assets: list[Infrastruct
                     languages=rng.choice([["ta"], ["ta", "en"], ["ta", "en", "hi"]]),
                     observed_from=now - timedelta(days=30),
                     observed_to=now,
-                    source="module-2",
+                    # These rows are generated, not received from Module 2, so
+                    # they must not claim otherwise. Real submissions arrive via
+                    # the Module 3 consumer and are labelled by the ingest path.
+                    source="synthetic",
                 )
             )
     return rows

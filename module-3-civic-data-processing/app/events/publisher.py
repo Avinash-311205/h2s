@@ -37,6 +37,7 @@ EVENT_RECORD_NEEDS_REVIEW = "CIVIC_RECORD_NEEDS_REVIEW"
 EVENT_RECORD_REJECTED = "CIVIC_RECORD_REJECTED"
 
 SCHEMA_VERSION = "1.0"
+SOURCE_MODULE = "module-3-civic-data-processing"
 
 
 @dataclass
@@ -162,7 +163,26 @@ class OutboxEventPublisher(EventPublisher):
         if record.status == EventStatus.PUBLISHED.value:
             return True
 
-        message = json.dumps(record.payload, ensure_ascii=False, default=str)
+        # Publish the full envelope, not just the payload. Module 4 records the
+        # source event_id in its lineage table, so event identity has to
+        # survive the hop; publishing the bare payload made that impossible.
+        message = json.dumps(
+            {
+                "event_id": record.event_id,
+                "event": record.event_type,
+                "event_type": record.event_type,
+                "channel": record.channel,
+                "schema_version": SCHEMA_VERSION,
+                "source_module": SOURCE_MODULE,
+                "correlation_id": record.request_id,
+                "request_id": record.request_id,
+                "issue_group_id": record.issue_group_id,
+                "timestamp": (record.created_at or utcnow()).isoformat(),
+                "payload": record.payload,
+            },
+            ensure_ascii=False,
+            default=str,
+        )
         try:
             self.transport.publish(record.channel, message)
         except Exception as exc:

@@ -30,6 +30,7 @@ class HealthService:
             "event_publisher": self._event_publisher(),
             "normalization_dictionary": self._dictionary(),
             "event_outbox": self._outbox(),
+            "upstream_consumer": self._upstream_consumer(),
         }
 
         # Only the database is a hard dependency for the API to be useful.
@@ -51,6 +52,23 @@ class HealthService:
         except Exception as exc:
             logger.error("health_database_failed", extra={"error": str(exc)})
             return {"status": "error", "detail": str(exc)}
+
+    def _upstream_consumer(self) -> dict[str, Any]:
+        """Report the Module 2 -> Module 3 subscription.
+
+        Without this the service looks healthy while nothing from Module 2 is
+        being consumed, which is exactly the failure mode this wiring exists to
+        remove.
+        """
+        if not settings.pipeline_consumer_enabled:
+            return {"status": "disabled"}
+        from app.events.consumer import get_consumer
+
+        status = get_consumer().status()
+        return {
+            "status": "ok" if status["connected"] else "disconnected",
+            "detail": status,
+        }
 
     def _redis(self) -> dict[str, Any]:
         if (settings.event_publisher or "").casefold() != "redis":

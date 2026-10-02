@@ -7,6 +7,7 @@ readers here use explicit ``GROUP BY`` queries and return plain lists.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Optional, Sequence
 
 from sqlalchemy import func, select
@@ -16,6 +17,7 @@ from app.core.enums import DataDomain, Sector
 from app.core.utils import utcnow
 from app.models.mesh_tables import (
     CensusIndicator,
+    CivicRecordLineage,
     CitizenDemand,
     DataProduct,
     GapRecord,
@@ -296,6 +298,170 @@ class MeshRepository:
             "gaps": self.session.scalar(select(func.count(GapRecord.id))) or 0,
             "data_products": self.session.scalar(select(func.count(DataProduct.id))) or 0,
         }
+
+
+    # --- civic record lineage (Module 3 -> Module 4) -------------------------
+    def get_lineage(self, request_id: str) -> Optional[CivicRecordLineage]:
+        """Look up one ingested request by its Module 1 correlation id."""
+        return self.session.scalar(
+            select(CivicRecordLineage).where(CivicRecordLineage.request_id == request_id)
+        )
+
+    def get_lineage_by_source_event(self, source_event_id: str) -> Optional[CivicRecordLineage]:
+        return self.session.scalar(
+            select(CivicRecordLineage).where(
+                CivicRecordLineage.source_event_id == source_event_id
+            )
+        )
+
+    def upsert_lineage(self, *, request_id: str, **fields: Any) -> CivicRecordLineage:
+        """Insert or refresh the lineage row for ``request_id``.
+
+        Idempotent by construction: a redelivered event updates the existing row
+        instead of appending a second one, so ``request_id`` stays unique and the
+        caller can use it to decide whether to re-apply the demand aggregate.
+        """
+        lineage = self.get_lineage(request_id)
+        if lineage is None:
+            lineage = CivicRecordLineage(request_id=request_id, **fields)
+            self.session.add(lineage)
+        else:
+            for key, value in fields.items():
+                setattr(lineage, key, value)
+        self.session.flush()
+        return lineage
+
+    def list_lineage(
+        self,
+        *,
+        ward_code: Optional[str] = None,
+        sector: Optional[str] = None,
+        category: Optional[str] = None,
+        limit: int = 100,
+    ) -> list[CivicRecordLineage]:
+        """List individual submissions, for auditing an aggregate or gap score."""
+        statement = select(CivicRecordLineage).order_by(CivicRecordLineage.received_at.desc())
+        if ward_code:
+            statement = statement.where(CivicRecordLineage.ward_code == ward_code)
+        if sector:
+            statement = statement.where(CivicRecordLineage.sector == sector)
+        if category:
+            statement = statement.where(CivicRecordLineage.category == category)
+        return list(self.session.scalars(statement.limit(limit)).all())
+
+    def list_lineage_for_request_group(
+        self, issue_group_id: str, limit: int = 500
+    ) -> list[CivicRecordLineage]:
+        """Every submission that belongs to one Module 3 issue group."""
+        return list(
+            self.session.scalars(
+                select(CivicRecordLineage)
+                .where(CivicRecordLineage.issue_group_id == issue_group_id)
+                .order_by(CivicRecordLineage.received_at)
+                .limit(limit)
+            ).all()
+        )
+
+    def get_ward_by_name(
+        self, ward_name: str, *, district: Optional[str] = None
+    ) -> Optional[Ward]:
+        """Resolve Module 3's free-text ward label to a mesh ward_code."""
+        statement = select(Ward).where(Ward.name == ward_name)
+        if district:
+            statement = statement.where(Ward.district == district)
+        return self.session.scalars(statement.limit(2)).first()
+
+    def apply_demand_increment(
+        self,
+        *,
+        ward_code: str,
+        sector: str,
+        category: str,
+        sub_category: str,
+        severity: int,
+        language: Optional[str],
+        observed_at: Any,
+        window_days: int = 30,
+    ) -> Optional[CitizenDemand]:
+        """Fold one accepted request into the ``citizen_demand`` aggregate.
+
+        The row is keyed on ``(ward_code, sector, category, window_days)``. The
+        caller is responsible for idempotency (see ``upsert_lineage``), because
+        ``complaint_count`` is a running total and cannot be replay-safe on its
+        own -- this method always increments.
+        """
+        existing = self.session.scalar(
+            select(CitizenDemand).where(
+                CitizenDemand.ward_code == ward_code,
+                CitizenDemand.sector == sector,
+                CitizenDemand.category == category,
+                CitizenDemand.window_days == window_days,
+            )
+        )
+
+        if existing is None:
+            existing = CitizenDemand(
+                ward_code=ward_code,
+                sector=sector,
+                category=category,
+                sub_category=sub_category,
+                window_days=window_days,
+                complaint_count=0,
+                avg_severity=0.0,
+                max_severity=severity,
+                critical_count=0,
+                languages=[],
+                source="module-4-ingest",
+            )
+            self.session.add(existing)
+
+        existing.sub_category = sub_category
+        existing.complaint_count = int(existing.complaint_count or 0) + 1
+        # Running mean, recomputed rather than incremented, so the average stays
+        # correct as the count grows.
+        existing.avg_severity = round(
+            (
+                float(existing.avg_severity or 0.0) * (existing.complaint_count - 1) + severity
+            )
+            / existing.complaint_count,
+            4,
+        )
+        existing.max_severity = max(int(existing.max_severity or 0), severity)
+        # gap_service._recommendation treats this as the count of severity>=4
+        # complaints, so it must stay consistent with the severity we just saw.
+        if severity >= 4:
+            existing.critical_count = int(existing.critical_count or 0) + 1
+
+        if language:
+            languages = list(existing.languages or [])
+            if language not in languages:
+                languages.append(language)
+            existing.languages = languages
+
+        observed = _as_utc(observed_at)
+        current_from, current_to = _as_utc(existing.observed_from), _as_utc(existing.observed_to)
+        existing.observed_from = observed if current_from is None else min(current_from, observed)
+        existing.observed_to = observed if current_to is None else max(current_to, observed)
+        existing.updated_at = utcnow()
+        self.session.flush()
+        return existing
+
+
+def _as_utc(value: Any) -> Any:
+    """Normalise a datetime to timezone-aware UTC.
+
+    SQLite drops tzinfo on read, so a value fetched from ``citizen_demand`` can
+    come back naive while a freshly parsed timestamp is aware. Comparing the two
+    raises, so everything is normalised on the way into ``observed_from`` /
+    ``observed_to``.
+    """
+    from datetime import timezone
+
+    if value is None or not isinstance(value, datetime):
+        return value
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 def _asset_types_for(sector: str) -> list[str]:

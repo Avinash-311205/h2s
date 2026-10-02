@@ -277,3 +277,69 @@ class GapRecord(Base):
         DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False
     )
     pipeline_version: Mapped[str] = mapped_column(String(20), nullable=False, default="1.0.0")
+
+class CivicRecordLineage(Base):
+    """One Module 3 civic record, kept at request granularity.
+
+    ``citizen_demand`` aggregates requests per ``(ward_code, sector, category,
+    window_days)`` and necessarily discards the individual submissions that
+    produced it. That aggregate is what the gap score is built from, so without
+    this table a ranked gap cannot be traced back to the citizens who reported
+    it -- the score would be unauditable.
+
+    This table is that missing link: exactly one row per ``request_id``, holding
+    the upstream event identity (``source_event_id``) and the ward/sector the
+    request was counted under. Join it to ``citizen_demand`` on
+    ``(ward_code, sector, category)`` to list the submissions behind any gap.
+
+    ``request_id`` is the correlation_id minted by Module 1 and is UNIQUE here,
+    which also makes ingest idempotent: a redelivered event updates this row
+    rather than double-counting the demand aggregate.
+    """
+
+    __tablename__ = "civic_record_lineage"
+    __table_args__ = (
+        Index("ix_lineage_ward_sector", "ward_code", "sector"),
+        Index("ix_lineage_received", "received_at"),
+        Index("ix_lineage_source_event", "source_event_id"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+
+    # Correlation id from Module 1 (REQ-YYYY-NNNNNN).
+    request_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    # Event id of the Module 3 publication this row was built from.
+    source_event_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    issue_group_id: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+
+    # Where this request landed. ward_code is nullable because a citizen can
+    # submit coordinates that resolve to no ward; the request is still recorded
+    # rather than dropped.
+    ward_code: Mapped[Optional[str]] = mapped_column(
+        String(20), ForeignKey("wards.ward_code"), nullable=True, index=True
+    )
+    district: Mapped[Optional[str]] = mapped_column(String(120), nullable=True)
+    location_status: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+
+    sector: Mapped[str] = mapped_column(String(40), nullable=False, default="UNKNOWN", index=True)
+    category: Mapped[str] = mapped_column(String(40), nullable=False, default="UNKNOWN", index=True)
+    sub_category: Mapped[str] = mapped_column(String(60), nullable=False, default="UNCLASSIFIED")
+    severity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    language: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+
+    # Upstream quality signals, kept so a reviewer can exclude soft records.
+    data_quality_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    data_quality_status: Mapped[Optional[str]] = mapped_column(String(20), nullable=True, index=True)
+
+    # Provenance of the payload itself.
+    source_module: Mapped[str] = mapped_column(String(40), nullable=False, default="module-3")
+    event_type: Mapped[Optional[str]] = mapped_column(String(40), nullable=True)
+    schema_version: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    payload: Mapped[Optional[dict[str, Any]]] = mapped_column(JSON, nullable=True)
+    counted_in_demand: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    event_timestamp: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    received_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow, nullable=False, index=True
+    )

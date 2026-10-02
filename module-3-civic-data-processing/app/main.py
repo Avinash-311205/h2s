@@ -14,6 +14,7 @@ from app.api.routes import civic_router, events_router, health_router, issues_ro
 from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.database.connection import SessionLocal, init_db
+from app.events.consumer import start_consumer, stop_consumer
 from app.events.publisher import publisher_for_session
 
 logger = get_logger(__name__)
@@ -48,7 +49,14 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     finally:
         db.close()
 
+    # Consume Module 2's completion events by calling our own /civic/process.
+    if settings.pipeline_consumer_enabled:
+        start_consumer()
+    else:
+        logger.info("pipeline_consumer_disabled")
+
     yield
+    stop_consumer()
     logger.info("service_stopping", extra={"service": settings.service_name})
 
 

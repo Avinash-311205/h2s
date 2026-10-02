@@ -39,6 +39,18 @@ class Settings(BaseSettings):
     event_retry_backoff_seconds: float = 0.5
     event_outbox_batch_size: int = 100
 
+    # --- Upstream (Module 2 -> Module 3) -----------------------------------
+    # The consumer listens here and calls this service's own
+    # POST /api/v1/civic/process, so the normalizer that already exists is the
+    # one that runs -- there is no second, divergent code path.
+    host: str = "0.0.0.0"
+    port: int = 8003
+    self_base_url: str = "http://127.0.0.1:8003"
+    understanding_channel: str = "civic.understanding.completed"
+    understanding_event_type: str = "UNDERSTANDING_COMPLETED"
+    upstream_process_timeout_seconds: float = 15.0
+    pipeline_consumer_enabled: bool = True
+
     # --- Geocoding ---------------------------------------------------------
     geocoding_provider: str = "mock"  # mock | nominatim | chain
     geocoding_fallback_provider: str = "mock"

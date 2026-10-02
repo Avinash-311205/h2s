@@ -95,61 +95,112 @@ The first four modules correspond closely to the ingestion, semantic NLP and nat
 
 # ✅ Implementation Status
 
-| # | Module | Status | Tests | Run locally |
-|---|--------|--------|-------|-------------|
-| **2** | [AI Understanding](module-2-ai-understanding/) | Implemented | 96 passing | `python seed_understanding.py` → port `8002` |
-| **3** | [Civic Data Processing](module-3-civic-data-processing/) | Implemented | 80 passing | event-driven ETL → port `8003` |
-| **4** | [National Data Mesh](module-4-national-data-mesh/) | Implemented | 139 passing | `python seed_mesh.py --reset` → port `8004` |
-| **5** | [Civic Intelligence](module-5-civic-intelligence/) | Implemented | 267 passing | `python seed_intelligence.py --reset` → port `8005` |
-| **6** | [Priority & Recommendation](module-6-priority-recommendation/) | Implemented | 112 passing | `python seed_priority.py` → port `8006` |
-| **7** | [Policymaker Dashboard](module-7-policymaker-dashboard/) | Implemented | `npm run build` | `npm run dev` → port `5173` |
-| **1** | [Citizen Ingestion](module-1-citizen-ingestion/) | Partial | — | voice/text capture UI and backend; `redis` dependency unresolved |
+| # | Module | Status | Tests | Port |
+|---|--------|--------|-------|------|
+| **1** | [Citizen Ingestion](module-1-citizen-ingestion/) | Implemented, wired into the pipeline | 7 passing | `8001` |
+| **2** | [AI Understanding](module-2-ai-understanding/) | Implemented, wired into the pipeline | 113 passing | `8002` |
+| **3** | [Civic Data Processing](module-3-civic-data-processing/) | Implemented, wired into the pipeline | 94 passing | `8003` |
+| **4** | [National Data Mesh](module-4-national-data-mesh/) | Implemented, wired into the pipeline | 177 passing | `8004` |
+| **5** | [Civic Intelligence](module-5-civic-intelligence/) | Implemented | 267 passing | `8005` |
+| **6** | [Priority & Recommendation](module-6-priority-recommendation/) | Implemented | 112 passing | `8006` |
+| **7** | [Policymaker Dashboard](module-7-policymaker-dashboard/) | Implemented | `npm run build` | `5173` |
 
-Each module is a self-contained FastAPI + SQLAlchemy service with its own
-database, seed script and test suite. Modules 2–6 run with no external services
-and no API keys: heavy AI dependencies fall back to deterministic local
-implementations, and SQLite stands in for PostgreSQL locally. Every module
-creates its schema on startup, so a fresh clone runs with no migration step.
+**770 tests pass across the six Python modules.** Each suite runs from its own
+module directory; there is no root test runner.
 
-There is no root test runner: each module's suite is run from its own directory.
+### How the modules are actually connected
 
-### Running the implemented chain
+Modules 1–4 are separate services that talk over **Redis pub/sub**, one channel
+per hop, with a per-hop `event_id` and a single `correlation_id` (the Module 1
+`request_id`) threaded through the whole chain:
 
-Each command runs from a module directory; `cd ..` walks back up.
-
-```bash
-# 2. AI Understanding - turn raw citizen input into structured records
-cd module-2-ai-understanding && python seed_understanding.py
-
-# 3. Civic Data Processing - validate, de-duplicate and geocode
-cd ../module-3-civic-data-processing && python -m uvicorn app.main:app --port 8003
-
-# 4. National Data Mesh - join demand, GIS, assets, projects, census on ward_code
-cd ../module-4-national-data-mesh && python seed_mesh.py --reset
-
-# 5. Civic Intelligence - read the mesh, detect hotspots, trends and emerging risks
-cd ../module-5-civic-intelligence && python seed_intelligence.py --reset
-
-# 6. Priority & Recommendation - score the hotspots and build the funding plan
-cd ../module-6-priority-recommendation && python seed_priority.py
-
-# 7. Policymaker Dashboard - serve the decision view
-cd ../module-7-policymaker-dashboard && npm install && npm run dev
+```text
+M1 ──citizen-requests──▶ M2 ──civic.understanding.completed──▶ M3 ──civic.records.processed──▶ M4
+  request_id=REQ-…        re-fetches M1's API          calls its own            writes citizen_demand
+  + event_id              for the stored text          POST /civic/process      + civic_record_lineage
 ```
 
-Module 6 reads Module 5's SQLite database **directly** rather than calling its
-API, so scoring needs no network and no running upstream service. Startup only
-initialises the schema, which keeps `/health` answerable before anything is
-scored; to produce or refresh the ranking:
+| Hop | Channel | Subscriber does |
+|-----|---------|-----------------|
+| M1 → M2 | `citizen-requests` | Re-reads the request from M1's API (the event is a signal, not the data), understands it, publishes `UNDERSTANDING_COMPLETED` |
+| M2 → M3 | `civic.understanding.completed` | Posts to M3's own `POST /api/v1/civic/process`, so the consumer and the API share one implementation |
+| M3 → M4 | `civic.records.processed` | Folds the record into the `citizen_demand` aggregate **and** records it in `civic_record_lineage` |
+
+Modules 5–7 keep reading the upstream SQLite database directly. Module 5 snapshots
+Module 4 on a schedule (idempotent) so it can compute trends over consecutive
+syncs; Module 6 scores Module 5's snapshots; Module 7 serves the decision view.
+That is a deliberate choice, not an omission — see
+[INTEGRATION_MAP.md](INTEGRATION_MAP.md) for the reasoning and for what is still
+missing.
+
+### Provenance and auditability
+
+The demand aggregate that gap scores are computed from discards the individual
+submissions behind it, so Module 4 keeps a request-level
+`civic_record_lineage` row for every accepted record:
+
+- `request_id` (from Module 1) and `source_event_id` (from Module 3) are stored
+  per request, and `request_id` is unique, which makes ingest idempotent — a
+  redelivered event refreshes the lineage row and does **not** double-count.
+- `GET /api/v1/demand?ward_code=…&sector=…` returns the aggregate a gap was
+  computed from; `GET /api/v1/lineage?ward_code=…&sector=…` lists the citizen
+  requests behind it. Together they answer "which complaints produced this
+  ranking?".
+- Records that could not be located to a ward, or that Module 3 rejected on
+  quality grounds, are still recorded in lineage (flagged
+  `counted_in_demand: false`) so nothing disappears silently, but they never
+  inflate a score.
+- Seeded demo demand is labelled `source="synthetic"` and ingested demand
+  `source="module-4-ingest"`. Synthetic rows never claim to have come from a
+  citizen.
+
+### Running the pipeline
+
+Redis is the only external dependency for Modules 1–4 and it is free software:
 
 ```bash
+brew install redis && redis-server          # or: docker compose up redis
+./scripts/start-all.sh                      # starts M1–M4, waits for each to be healthy
+python3 scripts/e2e_pipeline.py             # submits a real complaint and follows it to M4
+./scripts/stop-all.sh
+```
+
+`start-all.sh` starts the services in order, skipping any that are already
+listening, and fails loudly with the service's log tail if one never becomes
+healthy. Health endpoints:
+
+| Module | Health |
+|--------|--------|
+| M1–M4 | `GET /api/v1/health` |
+| M5, M6 | `GET /health` |
+
+M1's health reports database, Redis and object-storage state and returns `503`
+when Redis is down, because the pipeline cannot run without it. M1 also refuses
+to start without Redis rather than accepting requests it cannot publish.
+
+The end-to-end test is the real proof the modules are connected: it posts a
+citizen complaint to Module 1 over HTTP and then asserts the same `request_id`
+reaches Module 4's `civic_record_lineage` with its `event_id` intact, that the
+category was not relabelled in transit, and that the `citizen_demand` aggregate
+lists the submission. It imports nothing between modules and writes to no
+database directly.
+
+### Modules 5–7
+
+```bash
+cd module-5-civic-intelligence && python seed_intelligence.py --reset   # hotspots, trends
+cd ../module-6-priority-recommendation && python seed_priority.py       # scoring, funding plan
+cd ../module-7-policymaker-dashboard && npm install && npm run dev     # decision view
+```
+
+Module 5 reads Module 4's database as a snapshot over time, so it keeps the
+history that trends need and stays independent of whether Module 4 is currently
+running. Syncing is idempotent: re-syncing unchanged data inserts nothing.
+
+```bash
+curl -X POST http://localhost:8005/api/v1/operations/sync
 curl -X POST http://localhost:8006/api/v1/operations/recompute
 ```
-
-Module 5 reads Module 4's database as a **snapshot over time** rather than
-calling its API, so it keeps the history that trends need and stays independent
-of whether Module 4 is currently running. Syncing is idempotent: re-syncing
-unchanged data inserts nothing.
 
 Module 7 distinguishes the two ways its upstream can be unavailable: if Module 6
 is unreachable it says so and names the command to start it, and if Module 6 is

@@ -38,3 +38,6 @@ module-*/citizen_requests.db
 .DS_Store
 .vscode/
 .idea/
+
+# Runtime state from scripts/start-all.sh: pidfiles and service logs.
+.run/

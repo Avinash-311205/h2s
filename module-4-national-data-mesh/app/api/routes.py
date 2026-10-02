@@ -19,6 +19,7 @@ from app.api.schemas import (
     AssetOut,
     CapacityTargetsOut,
     DataProductOut,
+    DemandOut,
     DemandTotalOut,
     DistrictSummaryOut,
     DomainQualityOut,
@@ -187,6 +188,44 @@ def list_assets(
 @mesh_router.get("/assets/breakdown", summary="Asset counts by type and status")
 def asset_breakdown(db: Session = Depends(get_db)) -> dict:
     return {"rows": MeshRepository(db).asset_type_breakdown()}
+
+
+@mesh_router.get(
+    "/demand",
+    response_model=list[DemandOut],
+    summary="Citizen demand aggregates per ward and sector",
+)
+def list_demand(
+    ward_code: Optional[str] = Query(None, max_length=20),
+    sector: Optional[str] = Query(None, max_length=40),
+    db: Session = Depends(get_db),
+) -> list[DemandOut]:
+    """The aggregate behind a gap score.
+
+    Filter by ward and sector to get the row a gap was computed from, then use
+    ``/lineage?ward_code=...&sector=...`` to list the individual citizen
+    requests that produced it.
+    """
+    rows = MeshRepository(db).list_demand(ward_code=ward_code, sector=sector)
+    return [
+        DemandOut(
+            ward_code=row.ward_code,
+            sector=row.sector,
+            category=row.category,
+            sub_category=row.sub_category,
+            window_days=row.window_days,
+            complaint_count=row.complaint_count,
+            avg_severity=row.avg_severity,
+            max_severity=row.max_severity,
+            critical_count=row.critical_count,
+            languages=list(row.languages or []),
+            observed_from=row.observed_from.isoformat() if row.observed_from else None,
+            observed_to=row.observed_to.isoformat() if row.observed_to else None,
+            source=row.source,
+            updated_at=row.updated_at.isoformat() if row.updated_at else None,
+        )
+        for row in rows
+    ]
 
 
 @mesh_router.get("/demand/totals", response_model=list[DemandTotalOut], summary="Complaint totals per sector")

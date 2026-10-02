@@ -13,6 +13,9 @@ from typing import Iterator
 # Point the app at an in-memory database *before* app modules are imported, so a
 # test run can never create a stray national_data_mesh.db in the repo.
 os.environ.setdefault("DATABASE_URL", "sqlite://")
+# Never subscribe to a real Redis from the test suite: the consumer thread is
+# exercised directly in test_ingest_service.py instead.
+os.environ.setdefault("PIPELINE_CONSUMER_ENABLED", "false")
 
 import pytest
 from fastapi.testclient import TestClient

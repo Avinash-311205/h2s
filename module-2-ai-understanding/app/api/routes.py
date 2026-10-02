@@ -26,7 +26,10 @@ from app.core.config import settings
 from app.core.enums import UnderstandingStatus
 from app.core.logging import get_logger
 from app.database.connection import get_db
+from app.events.consumer import get_consumer
+from app.ingestion.client import IngestionClient
 from app.models.understanding_record import UnderstandingRecord
+from app.repositories.understanding_event_repository import UnderstandingEventRepository
 from app.repositories.understanding_repository import UnderstandingRepository
 from app.services import (
     asr_service,
@@ -49,10 +52,14 @@ def health_check(db: Session = Depends(get_db)) -> HealthOut:
     try:
         count = db.scalar(select(func.count(UnderstandingRecord.id))) or 0
         by_status = UnderstandingRepository(db).count_by_status()
+        events = UnderstandingEventRepository(db).count_by_status()
         ready = True
     except Exception as exc:  # pragma: no cover - surfaced as unhealthy
         logger.warning("health_check_failed", extra={"error": str(exc)})
-        count, by_status, ready = 0, {}, False
+        count, by_status, ready, events = 0, {}, False, {}
+
+    consumer = get_consumer().status()
+    upstream = IngestionClient().healthy()
 
     return HealthOut(
         status="healthy" if ready else "degraded",
@@ -61,6 +68,13 @@ def health_check(db: Session = Depends(get_db)) -> HealthOut:
         database_ready=ready,
         records=int(count),
         by_status=by_status,
+        consumer=consumer,
+        events=events,
+        upstream_ingestion={
+            "url": settings.ingestion_base_url,
+            "reachable": upstream,
+            "channel": settings.ingestion_channel,
+        },
     )
 
 

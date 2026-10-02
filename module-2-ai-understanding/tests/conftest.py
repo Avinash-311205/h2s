@@ -18,6 +18,9 @@ os.environ["DATABASE_URL"] = f"sqlite:///{_DB_PATH.as_posix()}"
 os.environ["AUTO_CREATE_SCHEMA"] = "true"
 os.environ["LOG_LEVEL"] = "WARNING"
 os.environ["LOG_JSON"] = "false"
+# The Redis consumer is exercised directly in test_pipeline_events.py;
+# TestClient(app) must not subscribe to a real Redis.
+os.environ["PIPELINE_CONSUMER_ENABLED"] = "false"
 os.environ["ASR_PROVIDER"] = "disabled"
 os.environ["TRANSLATION_PROVIDER"] = "auto"
 os.environ["IMAGE_PROVIDER"] = "heuristics"

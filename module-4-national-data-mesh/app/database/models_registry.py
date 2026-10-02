@@ -9,6 +9,7 @@ this module for exactly that reason.
 from app.models.mesh_tables import (
     Base,
     CensusIndicator,
+    CivicRecordLineage,
     CitizenDemand,
     DataProduct,
     GapRecord,
@@ -20,6 +21,7 @@ from app.models.mesh_tables import (
 __all__ = [
     "Base",
     "CensusIndicator",
+    "CivicRecordLineage",
     "CitizenDemand",
     "DataProduct",
     "GapRecord",

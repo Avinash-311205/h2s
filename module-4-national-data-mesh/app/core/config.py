@@ -30,6 +30,17 @@ class Settings(BaseSettings):
     auto_create_schema: bool = True
     db_pool_pre_ping: bool = True
 
+    # --- Upstream ingestion (Module 3 -> Module 4) ---------------------------
+    # Redis is how Module 3 delivers civic records. This module is the sink, so
+    # a missing Redis degrades the subscriber rather than the service: the mesh
+    # stays queryable and the failure shows up in health as a disconnected
+    # subscriber.
+    redis_url: str = "redis://localhost:6379/0"
+    civic_channel: str = "civic.records.processed"
+    civic_event_type: str = "CIVIC_RECORD_PROCESSED"
+    pipeline_consumer_enabled: bool = True
+    redis_socket_timeout_seconds: float = 2.0
+
     # --- Geography ----------------------------------------------------------
     # Mean earth radius in metres; haversine maths in `geo_service`.
     earth_radius_m: float = 6_371_008.8
