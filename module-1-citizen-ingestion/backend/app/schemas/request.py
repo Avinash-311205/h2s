@@ -40,6 +40,10 @@ class CitizenRequestResponse(BaseModel):
     longitude: Optional[float] = None
     location: Optional[str] = None
     created_at: datetime
+    event_id: Optional[str] = None
+    published_at: Optional[datetime] = None
+    pipeline_status: str = "PENDING"
+    pipeline_error: Optional[str] = None
 
 
 class MediaUploadResponse(BaseModel):

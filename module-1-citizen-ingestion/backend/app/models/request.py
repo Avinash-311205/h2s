@@ -24,3 +24,10 @@ class CitizenRequest(Base):
     location: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     status: Mapped[str] = mapped_column(String(30), nullable=False, default="RECEIVED")
+
+    # Pipeline provenance. request_id is the correlation_id followed by Modules
+    # 2, 3 and 4; event_id identifies this hop's publication.
+    event_id: Mapped[Optional[str]] = mapped_column(String(60), nullable=True, index=True)
+    published_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    pipeline_status: Mapped[str] = mapped_column(String(30), nullable=False, default="PENDING")
+    pipeline_error: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)

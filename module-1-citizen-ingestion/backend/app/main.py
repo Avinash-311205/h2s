@@ -4,28 +4,49 @@ from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile, 
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text as sql_text
 
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine, get_db
 from app.models.request import CitizenRequest  # noqa: F401
+from app.queue import redis_client
 from app.repositories.request_repository import RequestRepository
 from app.schemas.request import CitizenRequestCreate, CitizenRequestResponse, MediaUploadResponse
 from app.services.request_service import RequestService
-from app.storage.minio_client import ensure_bucket
+from app.storage.minio_client import ensure_bucket, storage_status
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     Base.metadata.create_all(bind=engine)
-    ensure_bucket(settings.minio_bucket_name)
+
+    # Redis carries every submission to Module 2, so a missing event bus is a
+    # failed start, not a degraded one. Say so plainly and stop.
+    if not redis_client.ping():
+        message = (
+            f"Redis is unreachable at {settings.redis_url}. Module 1 cannot publish "
+            "submissions to Module 2 without it. Start Redis (see scripts/start-all.sh) "
+            "or set REDIS_URL."
+        )
+        if settings.redis_required_at_startup:
+            raise RuntimeError(message)
+        print(f"WARNING: {message}")
+
+    # Object storage only serves media uploads, so its absence is logged and
+    # reported by /health rather than blocking the text pipeline.
+    if not ensure_bucket(settings.minio_bucket_name):
+        print(
+            f"WARNING: object storage at {settings.minio_endpoint} is unavailable; "
+            "media uploads are disabled until it is reachable."
+        )
     yield
 
 
 app = FastAPI(
     title="Niti-Setu Citizen Ingestion Service",
     description="Module 1 for receiving and standardizing citizen requests.",
-    version="0.1.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
@@ -45,8 +66,41 @@ async def request_validation_exception_handler(_: Request, exc: RequestValidatio
 
 
 @app.get("/api/v1/health")
-def health_check():
-    return {"status": "ok", "service": "citizen-ingestion"}
+def health_check(db=Depends(get_db)):
+    """Report real dependency state.
+
+    Redis is required (it is the handoff to Module 2), so an unreachable Redis
+    makes this service unhealthy and returns 503. Object storage is optional and
+    is reported without failing the check.
+    """
+    redis_ok = redis_client.ping()
+    database_ok = True
+    try:
+        db.execute(sql_text("SELECT 1"))
+    except Exception as exc:  # pragma: no cover - depends on real DB failure
+        database_ok = False
+        database_error: str | None = type(exc).__name__
+    else:
+        database_error = None
+
+    healthy = redis_ok and database_ok
+    return JSONResponse(
+        status_code=status.HTTP_200_OK if healthy else status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={
+            "status": "ok" if healthy else "degraded",
+            "service": "citizen-ingestion",
+            "dependencies": {
+                "database": {"available": database_ok, "reason": database_error},
+                "redis": {
+                    "available": redis_ok,
+                    "required": settings.redis_required_at_startup,
+                    "channel": settings.event_channel,
+                    "reason": None if redis_ok else "unreachable",
+                },
+                "object_storage": storage_status(),
+            },
+        },
+    )
 
 
 @app.post("/api/v1/requests", response_model=CitizenRequestResponse, status_code=status.HTTP_201_CREATED)

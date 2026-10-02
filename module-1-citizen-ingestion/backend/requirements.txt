@@ -1,11 +1,26 @@
-fastapi==0.111.1
-uvicorn[standard]==0.30.1
-sqlalchemy==2.0.32
-psycopg2-binary==2.9.9
-redis==5.0.8
-minio==7.2.7
-python-multipart==0.0.9
-pydantic==2.8.2
-pydantic-settings==2.3.4
-pytest==8.3.2
-httpx==0.27.0
+# Core runtime dependencies for Module 1 (Citizen Ingestion).
+#
+# Installable on any machine with no external services: the default
+# DATABASE_URL is SQLite, so nothing here needs a database server to be present.
+#
+# Versions are floors rather than hard pins because this service runs on the same
+# interpreter as Modules 2-6. The previous exact pins (fastapi 0.111.1 /
+# pydantic 2.8.2) predate Python 3.14 and forced a separate, unusable virtualenv.
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0.30
+redis>=5.0.8
+minio>=7.2.7
+python-multipart>=0.0.9
+pydantic>=2.8
+pydantic-settings>=2.3
+
+# Test dependencies.
+pytest>=8.0
+httpx>=0.27
+
+# PostgreSQL driver is NOT here on purpose: psycopg2-binary compiles against
+# libpq and needs pg_config, which most laptops do not have. It is only needed
+# when DATABASE_URL points at PostgreSQL (the docker-compose path), so it lives
+# in requirements-postgres.txt. Install both when you run against Postgres:
+#     pip install -r requirements.txt -r requirements-postgres.txt

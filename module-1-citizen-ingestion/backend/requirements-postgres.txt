@@ -1,0 +1,5 @@
+# PostgreSQL driver for Module 1, needed only when DATABASE_URL points at
+# PostgreSQL (the docker-compose path). Requires libpq / pg_config.
+#
+#     pip install -r requirements.txt -r requirements-postgres.txt
+psycopg2-binary==2.9.9
